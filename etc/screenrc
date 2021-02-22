@@ -48,7 +48,7 @@ mousetrack off
 
 # default windows
 screen -t main       1 bash
-screen -t devel      2 bash
+screen -t tmux       2 tmux
 screen -t devel      3 bash
 screen -t ssh        4 bash
 screen -t ssh        5 bash
