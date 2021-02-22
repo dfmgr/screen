@@ -17,9 +17,7 @@ caption always
 caption string "%n %t"
 
 # Set the status bar
-hardstatus alwayslastline
 hardstatus alwayslastline " %{kb}$LOGNAME %{bk} %H %?%{kb}%{kY} %-Lw%{Yk}%:%{Yb}%{Yk}%?%{Yk} %n%f* %t %{kY}%+Lw %-="
-#hardstatus alwayslastline "%{bk} %S %{kb} $LOGNAME %{bk} %H %?%{kb}%{kY} %-Lw%{Yk}%:%{Yb}%{Yk}%?%{Yk} %n%f* %t %{kY}%+Lw %-="
 
 # huge scrollback buffer
 defscrollback 5000
@@ -52,13 +50,12 @@ screen -t tmux       2 tmux
 screen -t devel      3 bash
 screen -t ssh        4 bash
 screen -t ssh        5 bash
-screen -t other      6 zsh
-screen -t social     7 bash -c social
+screen -t other      6 bash
+screen -t other      7 bash
 screen -t social     8 bash -c social
 screen -t media      9 bash -c multimedia
 select 1
 bind c screen 1 # window numbering starts at 1 not 0
-#bind 0 select 10
 
 # get rid of silly xoff stuff
 bind s split
