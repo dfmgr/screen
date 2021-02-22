@@ -95,3 +95,8 @@ bindkey "^[[B" focus down   # ctrl+down_arrow = bottom-left area
 bindkey "^[[C" focus bottom # ctrl+right_arrow = bottom-right area
 bindkey "^[[D" focus left   # ctrl+left_arrow = back to bottom-left area from bottom-right area
 
+# Finally! Shift-pg up or down to view scrollback buffer
+bindkey "^[[5;2~" eval "copy" "stuff ^u"
+bindkey -m "^[[5;2~" stuff ^u
+bindkey -m "^[[6;2~" stuff ^d
+
