@@ -85,7 +85,7 @@ bind -c rsz -k ku eval "focus up"    "command -c rsz" # Up
 bind -c rsz -k kd eval "focus down"  "command -c rsz" # Down
 
 # re-source screenrc file
-#bind r eval "source $HOME/.screenrc" "echo '.screenrc reloaded!'"
+bind r eval "source $HOME/.config/screen/screenrc" "echo '.screenrc reloaded!'"
 
 # You can use "showkey -a" to capture the key definitions for your terminal.
 bindkey "^[OR" prev         # F3 = previous window
