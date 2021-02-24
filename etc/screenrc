@@ -46,14 +46,14 @@ mousetrack off
 
 # default windows
 screen -t main       1 bash
-screen -t tmux       2 tmux
+screen -t devel      2 bash
 screen -t devel      3 bash
 screen -t ssh        4 bash
 screen -t ssh        5 bash
 screen -t other      6 bash
-screen -t other      7 bash
-screen -t social     8 bash -c social
-screen -t media      9 bash -c multimedia
+screen -t tmux       7 tmux
+screen -t social     8 social
+screen -t media      9 multimedia
 select 1
 bind c screen 1 # window numbering starts at 1 not 0
 
@@ -82,7 +82,7 @@ bind -c rsz -k ku eval "focus up"    "command -c rsz" # Up
 bind -c rsz -k kd eval "focus down"  "command -c rsz" # Down
 
 # re-source screenrc file
-bind r eval "source $HOME/.config/screen/screenrc" "echo '.screenrc reloaded!'"
+#bind r eval "source $HOME/.config/screen/screenrc" "echo '.screenrc reloaded!'"
 
 # You can use "showkey -a" to capture the key definitions for your terminal.
 bindkey "^[OR" prev         # F3 = previous window
