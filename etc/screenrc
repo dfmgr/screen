@@ -37,9 +37,9 @@ screen -t devel      2 bash
 screen -t devel      3 bash
 screen -t ssh        4 bash
 screen -t ssh        5 bash
-screen -t other      6 bash
-screen -t tmux       7 tmux
-screen -t social     8 social
+screen -t fish       6 fish
+screen -t zsh        7 zsh
+screen -t menu       8 mymenu
 screen -t media      9 multimedia
 # window numbering starts at 1 not 0
 select 1
