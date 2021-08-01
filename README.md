@@ -5,7 +5,7 @@ full-screen window manager that multiplexes a physical terminal between several 
 Automatic install/update:
 
 ```shell
-bash -c "$(curl -LSs https://github.com/dfmgr/screen/raw/master/install.sh)"
+bash -c "$(curl -LSs https://github.com/dfmgr/screen/raw/main/install.sh)"
 ```
 
 Manual install:
