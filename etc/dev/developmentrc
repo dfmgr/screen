@@ -30,9 +30,9 @@ nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
 # default windows
-screen -t main       1 bash
+screen -t cdd        1 cdd screen
+screen -t main       2 bash
 screen -t devel      2 bash
-screen -t cdd        3 cdd
 screen -t editor     4 bash
 screen -t testing    5 bash
 screen -t docker     6 bash
