@@ -79,4 +79,3 @@ bindkey "^[[D" focus left   # ctrl+left_arrow = back to bottom-left area from bo
 bindkey "^[[5;2~" eval "copy" "stuff ^u"
 bindkey -m "^[[5;2~" stuff ^u
 bindkey -m "^[[6;2~" stuff ^d
-
