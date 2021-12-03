@@ -35,10 +35,11 @@ nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
 # default windows
-screen -t node     1 bash
+screen -t node     1 node-dev
 screen -t dev      2 bash
-screen -t ide      3 bash -c "myeditor .;bash"
-screen -t browser  4 bash -c "mybrowser http://localhost:5000;bash"
+screen -t test     3 bash
+screen -t ide      4 bash -c "myeditor ."
+screen -t browser  5 bash -c "mybrowser http://localhost"
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1
