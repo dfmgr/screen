@@ -34,8 +34,12 @@ nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
 # default windows
-screen -t main       1 bash
-screen -t dev        2 bash
+screen -t 1        1 bash
+screen -t 2        2 bash
+screen -t 3        3 bash
+screen -t 4        4 bash
+screen -t 5        5 bash
+screen -t 6        6 bash
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1
