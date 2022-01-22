@@ -85,7 +85,9 @@ EOF
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Additional functions
-
+  __node_pkg() {
+    node -p "require('./package').scripts" 2>/dev/null | grep -sq dev && return 0 || return 1
+  }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Defaults
   local exitCode=
@@ -197,7 +199,7 @@ EOF
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # begin main app
-  if [[ -f "./package.json" ]] && node -p "require('./package').scripts" | grep -sq dev; then
+  if [[ -f "./package.json" ]] && __node_pkg; then
     npm run dev
   fi
 
