@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+##@Version       : 202108010014-git
+# @Author        : Jason Hempstead
+# @Contact       : jason@casjaysdev.com
+# @License       : LICENSE.md
+# @ReadME        : myscreen --help
+# @Copyright     : Copyright: (c) 2022 Jason Hempstead, Casjays Developments
+# @Created       : Saturday, Jan 22, 2022 14:10 EST
+# @File          : myscreen
+# @Description   : myscreen completion script
+# @TODO          :
+# @Other         :
+# @Resource      :
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+_myscreen() {
+  ___findcmd() { find -L "$SEARCHDIR" -type f -iname '*rc' -printf '%P\n' 2>/dev/null | grep '^' || return 1; }
+  local CASJAYSDEVDIR="${CASJAYSDEVDIR:-/usr/local/share/CasjaysDev/scripts}"
+  local cur prev words cword opts split
+  local cur="${COMP_WORDS[$COMP_CWORD]}"
+  local prev="${COMP_WORDS[$COMP_CWORD - 1]}"
+  local CONFFILE="settings.conf"
+  local CONFDIR="$HOME/.config/misc/settings/myscreen"
+  local SEARCHDIR="$HOME/.config/screen"
+  local SEARCHCMD="$(___findcmd | sort -u)"
+  local SHOW_COMP_OPTS=""
+  local FILEDIR=""
+  local OPTS=""
+  local LONGOPTS="--options --help --version --config"
+  local SHORTOPTS=""
+  local ARRAY="$SEARCHCMD"
+
+  _init_completion || return
+
+  if [[ "$SHOW_COMP_OPTS" != "" ]]; then
+    local SHOW_COMP_OPTS_SEP="$(echo "$SHOW_COMP_OPTS" | tr ',' ' ')"
+    compopt -o $SHOW_COMP_OPTS_SEP
+  fi
+
+  if [[ ${cur} == --* ]]; then
+    COMPREPLY=($(compgen -W '${LONGOPTS}' -- ${cur}))
+    return
+  elif [[ ${cur} == -* ]]; then
+    COMPREPLY=($(compgen -W '${SHORTOPTS}' -- ${cur}))
+    return
+  else
+    case "${COMP_WORDS[1]:-$prev}" in
+    --options)
+      local prev="--options"
+      COMPREPLY=($(compgen -W '' -- "${cur}"))
+      ;;
+
+    --config)
+      local prev="--config"
+      COMPREPLY=($(compgen -W '' -- "${cur}"))
+      ;;
+
+    --help)
+      prev="--help"
+      COMPREPLY=($(compgen -W '' -- "${cur}"))
+      ;;
+
+    --version)
+      local prev="--version"
+      COMPREPLY=($(compgen -W '' -- "${cur}"))
+      ;;
+
+    --dir)
+      local prev="dir"
+      _filedir
+      return
+      ;;
+
+    *)
+      if [[ ${cword} -gt 1 ]]; then
+        COMPREPLY=($(compgen -W '' -- "${cur}"))
+        return
+      elif [[ -n "$FILEDIR" ]] || [[ "$ARRAY" = "show__filedir" ]]; then
+        _filedir
+      elif [[ "$ARRAY" = "show__none" ]]; then
+        COMPREPLY=($(compgen -W '' -- "${cur}"))
+      elif [[ "$ARRAY" = "show__commands" ]]; then
+        COMPREPLY=($(compgen -c -- "${cur}"))
+      elif [ "$ARRAY" != "" ]; then
+        COMPREPLY=($(compgen -W '${ARRAY}' -- "${cur}"))
+      elif [ -n "$OPTS" ]; then
+        COMPREPLY=($(compgen -W '${OPTS}' -- "${cur}"))
+      else
+        COMPREPLY=($(compgen -W '${ARRAY}' -- "${cur}"))
+      fi
+      ;;
+    esac
+  fi
+  $split && return
+} &&
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # enable completions
+  complete -F _myscreen myscreen
