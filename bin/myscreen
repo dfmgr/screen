@@ -95,10 +95,13 @@ EOF
   __launch_screen() {
     local screen_input screen_config screen_name
     screen_input="${1//$MYSCREEN_HOME/}"
+    shift 1
     screen_config="$MYSCREEN_HOME/$screen_input"
-    screen_name="$(basename "${2:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
+    screen_name="$(basename "${screen_config}" 2>/dev/null | sed 's|rc$||g')"
+    ARGS="$*"
+    if [ "$screen_input" = "/dev/null" ] || [ "$1" = "null" ]; then screen_config="/dev/null" && screen_name="testing-$$"; fi
     export SCREEN_NAME="$screen_name"
-    screen -c "$screen_config" -R -S $screen_name
+    screen -c "$screen_config" -R -S $screen_name $ARGS
     exitCode=$?
     unset SCREEN_NAME SCREENEXCHANGE SCREEN_MSGMINWAIT
     return ${exitCode:-0}
