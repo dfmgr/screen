@@ -98,7 +98,6 @@ EOF
     screen_config="$MYSCREEN_HOME/$screen_input"
     screen_name="$(basename "${2:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
     export SCREEN_NAME="$screen_name"
-    echo "$screen_name | $SCREEN_NAME"
     screen -c "$screen_config" -R -S $screen_name
     exitCode=$?
     unset SCREEN_NAME SCREENEXCHANGE SCREEN_MSGMINWAIT
