@@ -1,6 +1,8 @@
 #Sources
 # - https://bbs.archlinux.org/viewtopic.php?id=55618&p=3
 # - https://bbs.archlinux.org/viewtopic.php?pid=930174#p930174
+# set session name
+sessionname default
 # search | name for dynamic window titles
 shelltitle '$|bash'
 # Detect activity in new windows
@@ -34,12 +36,9 @@ altscreen on
 nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
-# default windows
-screen -t main       1 bash
-screen -t run_server 9 run_server .
 
 # window numbering starts at 1 not 0
-select 9
+select 1
 bind c screen 1
 # get rid of silly xoff stuff
 bind s split
@@ -62,7 +61,7 @@ bind -c rsz -k ku eval "focus up"    "command -c rsz" # Up
 bind -c rsz -k kd eval "focus down"  "command -c rsz" # Down
 
 # re-source screenrc file
-#bind r eval "source $HOME/.config/screen/screenrc" "echo '.screenrc reloaded!'"
+bind r eval "source $HOME/.config/screen/screenrc" "echo '.screenrc reloaded!'"
 
 # You can use "showkey -a" to capture the key definitions for your terminal.
 bindkey "^[OR" prev         # F3 = previous window
