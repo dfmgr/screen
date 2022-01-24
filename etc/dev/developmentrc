@@ -1,6 +1,8 @@
 #Sources
 # - https://bbs.archlinux.org/viewtopic.php?id=55618&p=3
 # - https://bbs.archlinux.org/viewtopic.php?pid=930174#p930174
+# set session name
+sessionname development
 # search | name for dynamic window titles
 shelltitle '$|bash'
 # Detect activity in new windows
