@@ -222,7 +222,18 @@ EOF
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # begin main app
-  __launch_screen "$@"
+  case $1 in
+
+  single)
+    shift 1
+    __launch_screen
+    exit
+    ;;
+
+  *)
+    __launch_screen "$@"
+    ;;
+  esac
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # lets exit with code
