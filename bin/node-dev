@@ -202,7 +202,7 @@ EOF
   if [[ -f "./package.json" ]] && __node_pkg; then
     npm run dev
   fi
-
+  exec screen -dmS screen -t 9 node bash -c "cd $CWD && npm run dev"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # lets exit with code
   return ${exitCode:-$?}
