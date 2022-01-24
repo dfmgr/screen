@@ -71,6 +71,11 @@ _myscreen() {
       return
       ;;
 
+    single)
+      local prev="single"
+      COMPREPLY=($(compgen -W '${ARRAY}' -- "${cur}"))
+      ;;
+
     *)
       if [[ ${cword} -gt 1 ]]; then
         COMPREPLY=($(compgen -W '' -- "${cur}"))
