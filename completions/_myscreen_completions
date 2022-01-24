@@ -14,7 +14,7 @@
 # @Resource      :
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 _myscreen() {
-  ___findcmd() { find -L "$SEARCHDIR" -type f -iname '*rc' -printf '%P\n' 2>/dev/null | grep '^' || return 1; }
+  ___findcmd() { find -L "$SEARCHDIR" -type f -iname '*rc' -printf '%P\n' 2>/dev/null | sed 's|rc$||g' | grep '^' || return 1; }
   local CASJAYSDEVDIR="${CASJAYSDEVDIR:-/usr/local/share/CasjaysDev/scripts}"
   local cur prev words cword opts split
   local cur="${COMP_WORDS[$COMP_CWORD]}"
