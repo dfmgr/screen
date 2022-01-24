@@ -73,7 +73,7 @@ _myscreen() {
 
     single)
       local prev="single"
-      COMPREPLY=($(compgen -W '${ARRAY}' -- "${cur}"))
+      COMPREPLY=($(compgen -c -- "${cur}"))
       ;;
 
     *)
