@@ -147,6 +147,9 @@ fi
 run_postinst() {
   dfmgr_run_post
   ln_sf "$APPDIR/screenrc" "$HOME/.screenrc"
+  if ! grep -qs '# import screen aliases' "$HOME/.config/misc/shell/aliases/00-aliases.sh"; then
+    printf "# import screen aliases\n. ~/.config/screen/aliases\n" >>"$HOME/.config/misc/shell/aliases/00-aliases.sh"
+  fi
 }
 #
 execute "run_postinst" "Running post install scripts"
