@@ -47,7 +47,6 @@ bind s split
 # layouts
 layout autosave on
 layout new one
-select 1
 layout attach one
 layout select one
 # use hjkl keys to resize regions
