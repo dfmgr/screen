@@ -39,13 +39,13 @@ mousetrack off
 # default windows
 screen -t 1        1 $SHELL
 screen -t 2        2 $SHELL
-screen -t 3        3 $SHELL
-screen -t 4        4 $SHELL
-screen -t 5        5 $SHELL
-screen -t 6        6 $SHELL
-screen -t 7        7 $SHELL
-screen -t 8        8 $SHELL
-screen -t 9        9 $SHELL
+screen -t 3        3 sh -c 'while :;do myssh;sleep 1;done'
+screen -t 4        4 sh -c 'while :;do myssh;sleep 1;done'
+screen -t 5        5 sh -c 'while :;do myssh;sleep 1;done'
+screen -t 6        6 sh -c 'while :;do myssh;sleep 1;done'
+screen -t 7        7 sh -c 'while :;do myssh;sleep 1;done'
+screen -t 8        8 sh -c 'while :;do myssh;sleep 1;done'
+screen -t 9        9 sh -c 'while :;do myssh;sleep 1;done'
 
 # window numbering starts at 1 not 0
 select 1
@@ -55,7 +55,6 @@ bind s split
 # layouts
 layout autosave on
 layout new one
-select 1
 layout attach one
 layout select one
 # use hjkl keys to resize regions
