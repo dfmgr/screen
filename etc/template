@@ -1,6 +1,3 @@
-#Sources
-# - https://bbs.archlinux.org/viewtopic.php?id=55618&p=3
-# - https://bbs.archlinux.org/viewtopic.php?pid=930174#p930174
 # set session name
 sessionname template
 # search | name for dynamic window titles
@@ -14,7 +11,7 @@ termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
 termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
 terminfo vt100* ms:AL=\E[%p1%dL:DL=\E[%p1%dM:UP=\E[%p1%dA:DO=\E[%p1%dB:LE=\E[%
 attrcolor b ".I"
-#term "screen-256color"
+term "xterm-256color"
 defbce on
 # Always start `screen` with UTF-8 enabled (`screen -U`)
 defutf8 on
@@ -38,8 +35,6 @@ nethack on
 mousetrack off
 # default windows
 screen -t main       1 $SHELL
-
-
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1
@@ -61,10 +56,6 @@ bind -c rsz -k kl eval "focus left"  "command -c rsz" # Left
 bind -c rsz -k kr eval "focus right" "command -c rsz" # Right
 bind -c rsz -k ku eval "focus up"    "command -c rsz" # Up
 bind -c rsz -k kd eval "focus down"  "command -c rsz" # Down
-
-# re-source screenrc file
-#bind r eval "source $HOME/.config/screen/screenrc" "echo '.screenrc reloaded!'"
-
 # You can use "showkey -a" to capture the key definitions for your terminal.
 bindkey "^[OR" prev         # F3 = previous window
 bindkey "^[OS" next         # F4 = next window
@@ -91,3 +82,4 @@ bindkey -m "^[[25S" stuff \025
 # Scroll down more
 bindkey -d "^[[25T" eval copy "stuff \004"
 bindkey -m "^[[25T" stuff \004
+
