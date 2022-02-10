@@ -1,6 +1,4 @@
 #Sources
-# - https://bbs.archlinux.org/viewtopic.php?id=55618&p=3
-# - https://bbs.archlinux.org/viewtopic.php?pid=930174#p930174
 # set session name
 sessionname screen
 # search | name for dynamic window titles
@@ -14,7 +12,7 @@ termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
 termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
 terminfo vt100* ms:AL=\E[%p1%dL:DL=\E[%p1%dM:UP=\E[%p1%dA:DO=\E[%p1%dB:LE=\E[%
 attrcolor b ".I"
-#term "screen-256color"
+term "xterm-256color"
 defbce on
 # Always start `screen` with UTF-8 enabled (`screen -U`)
 defutf8 on
@@ -46,7 +44,6 @@ screen -t fish       6 fish
 screen -t zsh        7 zsh
 screen -t menu       8 sh -c 'while :;do mymenu;sleep 1;done'
 screen -t media      9 sh -c 'while :;do multimedia;sleep 1;done'
-
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1
@@ -98,3 +95,4 @@ bindkey -m "^[[25S" stuff \025
 # Scroll down more
 bindkey -d "^[[25T" eval copy "stuff \004"
 bindkey -m "^[[25T" stuff \004
+
