@@ -40,12 +40,22 @@ myscreen_main() {
   # helper functions - See github.com/dfmgr/misc/bin/functions.bash
   __version() { app_version; }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __help() {
+  __help() { #
     app_help "4" "Usage: myscreen  " \
+      "default                                -  default config" \
+      "single                                 -  single config" \
+      "productivity                           -  productivity config" \
+      "dev/development                        -  dev/development config" \
+      "dev/node                               -  dev/node config" \
+      "dev/single                             -  dev/single config" \
+      "dev/ssh                                -  dev/ssh config" \
+      "other/cdd                              -  other/cdd config" \
+      "other/social                           -  other/social config" \
+      "-c                                     -  default config" \
       "--options                              -  Show all options" \
-      "-c, --config                           -  Create config file" \
-      "-v, --version                          -  Display version" \
-      "-h, --help                             -  Display help"
+      "--config                               -  Create config file" \
+      "--version                              -  Display version" \
+      "--help                                 -  Display help"
 
     exit $?
   }
@@ -93,26 +103,27 @@ EOF
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   __launch_screen() {
-    local screen_input screen_config screen_name
-    if [ -f "$1" ] || [ -f "$MYSCREEN_HOME/$1" ]; then
-      screen_input="${1//$MYSCREEN_HOME/}"
+    local screen_input screen_config screen_name customConf="${MYSCREEN_CUSTOM_CONFIG:-$1}"
+    customConf="${customConf//$MYSCREEN_HOME/}"
+    if [ -f "${customConf}" ] || [ -f "$MYSCREEN_HOME/${customConf}" ]; then
+      screen_input="${customConf}"
       screen_config="$MYSCREEN_HOME/$screen_input"
       shift 1
-    elif [ -f "$1rc" ] || [ -f "$MYSCREEN_HOME/${1}rc" ]; then
-      screen_input="${1//$MYSCREEN_HOME/}"
+    elif [ -f "${customConf}rc" ] || [ -f "$MYSCREEN_HOME/${customConf}rc" ]; then
+      screen_input="${customConf}"
       screen_config="$MYSCREEN_HOME/${screen_input}rc"
       shift 1
-    elif [ "$screen_input" = "/dev/null" ] || [ "$1" = "null" ]; then
+    elif [ "$screen_input" = "/dev/null" ] || [ "$customConf" = "null" ]; then
       screen_config="/dev/null"
       screen_name="testing-$$"
     else
       screen_config="$MYSCREEN_HOME/defaultrc"
       screen_name="default"
     fi
-    ARGS="$*"
+    ARGS="${*:-$SHELL}"
     screen_name="$(basename "${screen_name:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
     export SCREEN_NAME="$screen_name"
-    screen -c "$screen_config" -R -S $SCREEN_NAME $ARGS
+    screen -c "$screen_config" -R -S $SCREEN_NAME ${ARGS}
     exitCode=$?
     unset SCREEN_NAME SCREENEXCHANGE SCREEN_MSGMINWAIT
     return ${exitCode:-0}
@@ -177,12 +188,13 @@ EOF
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument/Option settings
   local SETARGS="$*"
-  local SHORTOPTS=""
+  local SHORTOPTS="-c:"
   local LONGOPTS="options,config,version,help,dir:"
-  local ARRAY=""
+  local ARRAY="default dev/development dev/node dev/single dev/ssh other/cdd other/social productivity single"
+  local setopts=""
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Setup application options
-  local setopts=$(getopt -o "$SHORTOPTS" --long "$LONGOPTS" -a -n "$(basename "$0" 2>/dev/null)" -- "$@" 2>/dev/null)
+  setopts=$(getopt -o "$SHORTOPTS" --long "$LONGOPTS" -a -n "$(basename "$0" 2>/dev/null)" -- "$@" 2>/dev/null)
   eval set -- "${setopts[@]}" 2>/dev/null
   while :; do
     case "$1" in
@@ -211,6 +223,10 @@ EOF
       ;;
     --dir)
       MYSCREEN_CWD="$2"
+      shift 2
+      ;;
+    -c)
+      MYSCREEN_CUSTOM_CONFIG="$2"
       shift 2
       ;;
     --)
