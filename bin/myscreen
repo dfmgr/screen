@@ -23,7 +23,7 @@ myscreen_main() {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Set bash options
   if [[ "$1" == "--debug" ]]; then shift 1 && set -xo pipefail && export SCRIPT_OPTS="--debug" && export _DEBUG="on"; fi
-
+  set -x
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Main function file
   if [ -f "$SRC_DIR/functions.bash" ]; then
@@ -100,28 +100,24 @@ EOF
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Additional functions
   __find_config() {
-    find -L "$MYSCREEN_HOME" -type f -iname '*rc' -printf '%P\n' 2>/dev/null
+    find -L "$MYSCREEN_HOME" -type f -iname '*rc' -printf '%P\n' | sed 's|rc$||g' 2>/dev/null
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   __launch_screen() {
     local screen_input screen_config screen_name customConf="${MYSCREEN_CUSTOM_CONFIG:-$1}"
     customConf="${customConf//$MYSCREEN_HOME/}"
     if [ -f "${customConf}" ]; then
-      screen_input="${customConf}"
-      screen_config="$screen_input"
       shift 1
+      screen_config="$customConf"
     elif [ -f "${customConf}rc" ]; then
-      screen_input="${customConf}rc"
-      screen_config="${screen_input}rc"
       shift 1
-    elif [ -f "$MYSCREEN_HOME/${screen_input}" ]; then
-      screen_input="${screen_input}"
-      screen_config="$MYSCREEN_HOME/${screen_input}"
+      screen_config="${customConf}rc"
+    elif [ -f "$MYSCREEN_HOME/${customConf}" ]; then
       shift 1
+      screen_config="$MYSCREEN_HOME/${customConf}"
     elif [ -f "$MYSCREEN_HOME/${screen_input}rc" ]; then
-      screen_input="${screen_input}rc"
-      screen_config="$MYSCREEN_HOME/${screen_input}rc"
       shift 1
+      screen_config="$MYSCREEN_HOME/${customConf}rc"
     elif [ "$screen_input" = "/dev/null" ] || [ "$customConf" = "null" ]; then
       screen_name="testing-$$"
       screen_config="/dev/null"
@@ -141,11 +137,11 @@ EOF
       screen_name="default"
       screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT:-defaultrc}"
     fi
-    ARGS="${*:-$SHELL}"
-    screen_config="${screen_config//$MYSCREEN_HOME/}"
+    ARGS="${*:-}"
+    screen_config="${screen_config}"
     screen_name="$(basename "${screen_name:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
     export SCREEN_NAME="$screen_name"
-    screen -c "$screen_config" -R -S $SCREEN_NAME ${ARGS}
+    screen -R -S $SCREEN_NAME -c "$screen_config" ${ARGS}
     exitCode=$?
     unset SCREEN_NAME SCREENEXCHANGE SCREEN_MSGMINWAIT
     return ${exitCode:-0}
@@ -210,7 +206,7 @@ EOF
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument/Option settings
   local SETARGS="$*"
-  local SHORTOPTS="-c:"
+  local SHORTOPTS="c:"
   local LONGOPTS="options,config,version,help,dir:"
   local ARRAY="default dev/development dev/node dev/single dev/ssh other/cdd other/social productivity single"
   local setopts=""
@@ -261,13 +257,13 @@ EOF
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Actions based on env
   [ $# -eq 0 ] && printf_blue "Usage: $PROG [configFile] [name]" && __find_config | printf_column && return 1
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Check for required applications/Network check
   cmd_exists --error bash screen || exit 1 # exit 1 if not found
   #am_i_online --error || exit 1     # exit 1 if no internet
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # APP Variables overrides
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # begin main app
   case $1 in
