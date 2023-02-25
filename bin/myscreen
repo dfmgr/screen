@@ -73,6 +73,7 @@ myscreen_main() {
       cp -Rf "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" "$MYSCREEN_CONFIG_BACKUP_DIR/$MYSCREEN_CONFIG_FILE.$$"
     cat <<EOF >"$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE"
 # Settings for myscreen
+MYSCREEN_DEFAULT="${MYSCREEN_DEFAULT:-}"
 MYSCREEN_HOME="${MYSCREEN_HOME:-$HOME/.config/screen}"
 
 # Notification settings
@@ -105,22 +106,43 @@ EOF
   __launch_screen() {
     local screen_input screen_config screen_name customConf="${MYSCREEN_CUSTOM_CONFIG:-$1}"
     customConf="${customConf//$MYSCREEN_HOME/}"
-    if [ -f "${customConf}" ] || [ -f "$MYSCREEN_HOME/${customConf}" ]; then
+    if [ -f "${customConf}" ]; then
       screen_input="${customConf}"
-      screen_config="$MYSCREEN_HOME/$screen_input"
+      screen_config="$screen_input"
       shift 1
-    elif [ -f "${customConf}rc" ] || [ -f "$MYSCREEN_HOME/${customConf}rc" ]; then
-      screen_input="${customConf}"
+    elif [ -f "${customConf}rc" ]; then
+      screen_input="${customConf}rc"
+      screen_config="${screen_input}rc"
+      shift 1
+    elif [ -f "$MYSCREEN_HOME/${screen_input}" ]; then
+      screen_input="${screen_input}"
+      screen_config="$MYSCREEN_HOME/${screen_input}"
+      shift 1
+    elif [ -f "$MYSCREEN_HOME/${screen_input}rc" ]; then
+      screen_input="${screen_input}rc"
       screen_config="$MYSCREEN_HOME/${screen_input}rc"
       shift 1
     elif [ "$screen_input" = "/dev/null" ] || [ "$customConf" = "null" ]; then
-      screen_config="/dev/null"
       screen_name="testing-$$"
+      screen_config="/dev/null"
+    elif [ -f "${MYSCREEN_DEFAULT}" ]; then
+      screen_input="${MYSCREEN_DEFAULT}"
+      screen_config="${MYSCREEN_DEFAULT}"
+    elif [ -f "${MYSCREEN_DEFAULT}rc" ]; then
+      screen_input="${MYSCREEN_DEFAULT}rc"
+      screen_config="${MYSCREEN_DEFAULT}rc"
+    elif [ -f "$MYSCREEN_HOME/${MYSCREEN_DEFAULT}" ]; then
+      screen_input="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}"
+      screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}"
+    elif [ -f "$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc" ]; then
+      screen_input="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
+      screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
     else
-      screen_config="$MYSCREEN_HOME/defaultrc"
       screen_name="default"
+      screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT:-defaultrc}"
     fi
     ARGS="${*:-$SHELL}"
+    screen_config="${screen_config//$MYSCREEN_HOME/}"
     screen_name="$(basename "${screen_name:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
     export SCREEN_NAME="$screen_name"
     screen -c "$screen_config" -R -S $SCREEN_NAME ${ARGS}
@@ -150,8 +172,8 @@ EOF
   local MYSCREEN_OUTPUT_COLOR_ERROR="${MYSCREEN_OUTPUT_COLOR_ERROR:-1}"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Enviroment overrides
+  local MYSCREEN_DEFAULT="${MYSCREEN_DEFAULT:-default}"
   local MYSCREEN_HOME="${MYSCREEN_HOME:-$HOME/.config/screen}"
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Generate config files
   [ -f "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" ] || [[ "$*" = *config ]] || INIT_CONFIG="${INIT_CONFIG:-TRUE}" __gen_config ${SETARGS:-$@}

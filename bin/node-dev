@@ -13,7 +13,7 @@
 # @Other         :
 # @Resource      :
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-node-dev_main() {
+node_dev_main() {
   PROG="$(basename "$0" 2>/dev/null)"
   VERSION="202108010014-git"
   RUN_USER="${SUDO_USER:-${USER}}"
@@ -86,7 +86,14 @@ EOF
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Additional functions
   __node_pkg() {
-    node -p "require('./package').scripts" 2>/dev/null | grep -sq dev && return 0 || return 1
+    NODE_CMD="$(node -p "require('./package').scripts" 2>/dev/null | grep -sq 'dev')"
+    [ -n "$NODE_CMD" ] && return 0 || return 1
+  }
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  __npm_run() {
+    [ -f "$(type -P npm)" ] || return 1
+    eval npm "$@"
+    return $?
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Defaults
@@ -199,17 +206,17 @@ EOF
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # begin main app
-  if [[ -f "./package.json" ]] && __node_pkg; then
-    npm run dev
+  if [ -f "./package.json" ] && __node_pkg; then
+    __npm_run i -D
   fi
-  exec screen -dmS screen -t 9 node bash -c "cd $CWD && npm run dev"
+  exec screen -dmS screen -t 9 node bash -c "cd $CWD && npm run ${NODE_CMD}"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # lets exit with code
   return ${exitCode:-$?}
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # execute function
-node-dev_main "$@"
+node_dev_main "$@"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # End application
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
