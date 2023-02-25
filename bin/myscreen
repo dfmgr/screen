@@ -23,7 +23,6 @@ myscreen_main() {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Set bash options
   if [[ "$1" == "--debug" ]]; then shift 1 && set -xo pipefail && export SCRIPT_OPTS="--debug" && export _DEBUG="on"; fi
-  set -x
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Main function file
   if [ -f "$SRC_DIR/functions.bash" ]; then
