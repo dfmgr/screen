@@ -1,25 +1,25 @@
 # set session name
-sessionname single
+##sessionname single
 # search | name for dynamic window titles
 shelltitle '$|bash'
 # Detect activity in new windows
 defmonitor on
 # Turn your hardstatus line into a dynamic urxvt|xterm|aterm window title
 backtick 1 5 5 true
-#termcapinfo rxvt* 'hs:ts=\E]2;:fs=\007:ds=\E]2;\007'
-#termcapinfo xterm* 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
-#termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
-#terminfo vt100* ms:AL=\E[%p1%dL:DL=\E[%p1%dM:UP=\E[%p1%dA:DO=\E[%p1%dB:LE=\E[%
+termcapinfo rxvt* 'hs:ts=\E]2;:fs=\007:ds=\E]2;\007'
+termcapinfo xterm* 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
+termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
+terminfo vt100* ms:AL=\E[%p1%dL:DL=\E[%p1%dM:UP=\E[%p1%dA:DO=\E[%p1%dB:LE=\E[%
 attrcolor b ".I"
 term "xterm-256color"
 defbce on
 # Always start `screen` with UTF-8 enabled (`screen -U`)
 defutf8 on
 # Set the window titles
-caption always
+caption never
 caption string "%n %t"
 # Set the status bar
-#hardstatus alwayslastline
+hardstatus alwayslastline
 hardstatus string '%{= Kd} %{= Kd}%-w%{= Kr}[%{= KW}%n %t%{= Kr}]%{= Kd}%+w %-= %{KG} %H%{KW} | %?%{KY}LSF: %101`%{KW} | %?%D %M %d %Y%{= Kc} %C%A%{-}'
 # huge scrollback buffer
 defscrollback 5000

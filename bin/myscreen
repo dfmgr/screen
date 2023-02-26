@@ -45,6 +45,7 @@ myscreen_main() {
       "single                                 -  single config" \
       "productivity                           -  productivity config" \
       "dev/development                        -  dev/development config" \
+      "dev/docker                             -  dev/docker config" \
       "dev/node                               -  dev/node config" \
       "dev/single                             -  dev/single config" \
       "dev/ssh                                -  dev/ssh config" \
@@ -116,7 +117,7 @@ EOF
     local win_names="$*"
     cat <<EOF | tee
 # set session name
-sessionname ${name:-template}
+#sessionname ${name:-template}
 # search | name for dynamic window titles
 shelltitle '\$|bash'
 # Detect activity in new windows
@@ -133,10 +134,10 @@ defbce on
 # Always start 'screen' with UTF-8 enabled ('screen -U')
 defutf8 on
 # Set the window titles
-caption always
+caption never
 caption string "%n %t"
 # Set the status bar
-#hardstatus alwayslastline
+hardstatus alwayslastline
 hardstatus string '%{= Kd} %{= Kd}%-w%{= Kr}[%{= KW}%n %t%{= Kr}]%{= Kd}%+w %-= %{KG} %H%{KW} | %?%{KY}LSF: %101\`%{KW} | %?%D %M %d %Y%{= Kc} %C%A%{-}'
 # huge scrollback buffer
 defscrollback 5000
@@ -270,7 +271,7 @@ EOF
         printf_blue "Usage: $PROG [configFile] [name]" && __find_config | printf_column && return 1
       fi
     fi
-    ARGS="${*:-}"
+    ARGS="$*"
     screen_name="${custom_screen_name:-$screen_name}"
     screen_name="$(basename "${screen_name:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
     export SCREEN_NAME="$screen_name"

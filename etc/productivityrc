@@ -1,6 +1,6 @@
 #Sources
 # set session name
-sessionname screen
+#sessionname screen
 # search | name for dynamic window titles
 shelltitle '$|bash'
 # Detect activity in new windows
@@ -17,10 +17,10 @@ defbce on
 # Always start `screen` with UTF-8 enabled (`screen -U`)
 defutf8 on
 # Set the window titles
-caption always
+caption never
 caption string "%n %t"
 # Set the status bar
-#hardstatus alwayslastline
+hardstatus alwayslastline
 hardstatus string '%{= Kd} %{= Kd}%-w%{= Kr}[%{= KW}%n %t%{= Kr}]%{= Kd}%+w %-= %{KG} %H%{KW} | %?%{KY}LSF: %101`%{KW} | %?%D %M %d %Y%{= Kc} %C%A%{-}'
 # huge scrollback buffer
 defscrollback 5000
