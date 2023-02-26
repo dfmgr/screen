@@ -26,8 +26,8 @@ _myscreen() {
   local SHOW_COMP_OPTS=""
   local FILEDIR=""
   local OPTS=""
-  local LONGOPTS="--options --help --version --config"
-  local SHORTOPTS=""
+  local LONGOPTS="--options --config --version --help --dir --template --replace --name"
+  local SHORTOPTS="-c"
   local ARRAY="$SEARCHCMD"
 
   _init_completion || return
@@ -100,4 +100,4 @@ _myscreen() {
 } &&
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # enable completions
-  complete -F _myscreen myscreen
+  complete -F _myscreen -o default myscreen

@@ -40,7 +40,7 @@ myscreen_main() {
   __version() { app_version; }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   __help() { #
-    app_help "4" "Usage: myscreen  " \
+    app_help "4" "Usage: myscreen [conf] [name] cmd " \
       "default                                -  default config" \
       "single                                 -  single config" \
       "productivity                           -  productivity config" \
@@ -51,6 +51,8 @@ myscreen_main() {
       "other/cdd                              -  other/cdd config" \
       "other/social                           -  other/social config" \
       "-c                                     -  default config" \
+      "--replace                              -  Replace an existing config " \
+      "--template                             -  Create a new config file [name] [name:cmd,dev:zsh]" \
       "--options                              -  Show all options" \
       "--config                               -  Create config file" \
       "--version                              -  Display version" \
@@ -97,13 +99,132 @@ EOF
     fi
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  __create_windows() {
+    local count=0
+    local windows="${*//,/ }"
+    [ "$windows" = "" ] && printf 'screen -t main       1 $SHELL' && return
+    for window in $windows; do
+      count=$((count + 1))
+      win="$(echo "$window" | awk -F ':' '{print $1}' || echo '')"
+      cmd="$(echo "$window" | awk -F ':' '{print $2}' || echo '')"
+      printf 'screen -t %s       %s %s\n' "${win:-$window}" "$count" "${cmd:-\$SHELL}"
+    done
+  }
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Additional functions
+  __template() {
+    local win_names="$*"
+    cat <<EOF | tee
+# set session name
+sessionname template
+# search | name for dynamic window titles
+shelltitle '\$|bash'
+# Detect activity in new windows
+defmonitor on
+# Turn your hardstatus line into a dynamic urxvt|xterm|aterm window title
+backtick 1 5 5 true
+termcapinfo rxvt* 'hs:ts=\E]2;:fs=\007:ds=\E]2;\007'
+termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
+termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
+terminfo vt100* ms:AL=\E[%p1%dL:DL=\E[%p1%dM:UP=\E[%p1%dA:DO=\E[%p1%dB:LE=\E[%
+attrcolor b ".I"
+term "xterm-256color"
+defbce on
+# Always start 'screen' with UTF-8 enabled ('screen -U')
+defutf8 on
+# Set the window titles
+caption always
+caption string "%n %t"
+# Set the status bar
+hardstatus alwayslastline " %{kb}\$LOGNAME %{bk} %H %?%{kb}%{kY} %-Lw%{Yk}%:%{Yb}%{Yk}%?%{Yk} %n%f* %t %{kY}%+Lw %-="
+# huge scrollback buffer
+defscrollback 5000
+# no welcome message
+startup_message off
+# Display notification when bell is detected for a window
+bell_msg "Bell detected in %t (%n)!"
+activity "Activity detected in %t (%n)!"
+# Fix for residual editor text
+altscreen on
+# print wackier status messages
+nethack on
+# mouse tracking allows to switch region focus by clicking
+mousetrack off
+# default windows
+$(__create_windows "$win_names")
+# window numbering starts at 1 not 0
+select 1
+bind c screen 1
+# get rid of silly xoff stuff
+bind s split
+# layouts
+layout autosave on
+layout new one
+layout attach one
+layout select one
+# use hjkl keys to resize regions
+bind -c rsz h eval "resize -h -5" "command -c rsz"
+bind -c rsz j eval "resize -v -5" "command -c rsz"
+bind -c rsz k eval "resize -v +5" "command -c rsz"
+bind -c rsz l eval "resize -h +5" "command -c rsz"
+# quickly switch between regions using tab and arrows
+bind -c rsz \t    eval "focus"       "command -c rsz" # Tab
+bind -c rsz -k kl eval "focus left"  "command -c rsz" # Left
+bind -c rsz -k kr eval "focus right" "command -c rsz" # Right
+bind -c rsz -k ku eval "focus up"    "command -c rsz" # Up
+bind -c rsz -k kd eval "focus down"  "command -c rsz" # Down
+# You can use "showkey -a" to capture the key definitions for your terminal.
+bindkey "^[OR" prev         # F3 = previous window
+bindkey "^[OS" next         # F4 = next window
+bindkey "^[[1;2C" next      # shift+right_arrow
+bindkey "^[[1;2D" prev      # shift+left_arrow
+bindkey "^[[A" focus top    # ctrl+up_arrow = large top area
+bindkey "^[[B" focus down   # ctrl+down_arrow = bottom-left area
+bindkey "^[[C" focus bottom # ctrl+right_arrow = bottom-right area
+bindkey "^[[D" focus left   # ctrl+left_arrow = back to bottom-left area from bottom-right area
+# Finally! Shift-pg up or down to view scrollback buffer
+bindkey "^[[5;2~" eval "copy" "stuff ^u"
+bindkey -m "^[[5;2~" stuff ^u
+bindkey -m "^[[6;2~" stuff ^d
+# Mouse scrolling
+# Scroll up
+bindkey -d "^[[5S" eval copy "stuff 5\025"
+bindkey -m "^[[5S" stuff 5\025
+# Scroll down
+bindkey -d "^[[5T" eval copy "stuff 5\004"
+bindkey -m "^[[5T" stuff 5\004
+# Scroll up more
+bindkey -d "^[[25S" eval copy "stuff \025"
+bindkey -m "^[[25S" stuff \025
+# Scroll down more
+bindkey -d "^[[25T" eval copy "stuff \004"
+bindkey -m "^[[25T" stuff \004
+
+EOF
+  }
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   __find_config() {
     find -L "$MYSCREEN_HOME" -type f -iname '*rc' -printf '%P\n' | sed 's|rc$||g' 2>/dev/null
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  __create_template() {
+    name="$(basename "$MYSCREEN_CREATE_TEMPLATE")"
+    dir="$(dirname "$(realpath "$MYSCREEN_CREATE_TEMPLATE")")"
+    [ "$MYSCREE_UPDATE_CONF" = "true" ] && [ -f "$dir/${name}" ] && rm -f "$dir/${name}"
+    [ -f "$dir/${name}" ] && printf_exit "File $dir/${name} exists"
+    printf_cyan "Creating $dir/${name}"
+    __template "$@" | tee "$dir/${name}" &>/dev/null
+    if [ -f "$dir/${name}" ]; then
+      printf_green "Created $dir/${name}"
+      exit 0
+    else
+      printf_yellow "Failed to create $dir/${name}"
+      exit 1
+    fi
+  }
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   __launch_screen() {
-    local screen_input screen_config screen_name customConf="${MYSCREEN_CUSTOM_CONFIG:-$1}"
+    local screen_input screen_config screen_name="$MYSCREEN_NAME" customConf="${1:-$MYSCREEN_CUSTOM_CONFIG}"
     customConf="${customConf//$MYSCREEN_HOME/}"
     if [ -f "${customConf}" ]; then
       shift 1
@@ -114,7 +235,7 @@ EOF
     elif [ -f "$MYSCREEN_HOME/${customConf}" ]; then
       shift 1
       screen_config="$MYSCREEN_HOME/${customConf}"
-    elif [ -f "$MYSCREEN_HOME/${screen_input}rc" ]; then
+    elif [ -f "$MYSCREEN_HOME/${customConf}rc" ]; then
       shift 1
       screen_config="$MYSCREEN_HOME/${customConf}rc"
     elif [ "$screen_input" = "/dev/null" ] || [ "$customConf" = "null" ]; then
@@ -134,10 +255,19 @@ EOF
       screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
     else
       screen_name="default"
-      screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT:-defaultrc}"
+      screen_config="${MYSCREEN_DEFAULT:-defaultrc}"
+    fi
+    if [ "$screen_name" = "default" ]; then
+      if [ -f "$MYSCREEN_HOME/${screen_config}" ]; then
+        screen_config="$MYSCREEN_HOME/${screen_config}"
+      elif [ -f "$MYSCREEN_HOME/${screen_config}rc" ]; then
+        screen_config="$MYSCREEN_HOME/${screen_config}rc"
+      else
+        printf_yellow "$MYSCREEN_HOME/${screen_config} does not exist"
+        printf_blue "Usage: $PROG [configFile] [name]" && __find_config | printf_column && return 1
+      fi
     fi
     ARGS="${*:-}"
-    screen_config="${screen_config}"
     screen_name="$(basename "${screen_name:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
     export SCREEN_NAME="$screen_name"
     screen -R -S $SCREEN_NAME -c "$screen_config" ${ARGS}
@@ -167,6 +297,7 @@ EOF
   local MYSCREEN_OUTPUT_COLOR_ERROR="${MYSCREEN_OUTPUT_COLOR_ERROR:-1}"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Enviroment overrides
+  local MYSCREEN_CREATE_ENABLED="false"
   local MYSCREEN_DEFAULT="${MYSCREEN_DEFAULT:-default}"
   local MYSCREEN_HOME="${MYSCREEN_HOME:-$HOME/.config/screen}"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -206,7 +337,7 @@ EOF
   # Argument/Option settings
   local SETARGS="$*"
   local SHORTOPTS="c:"
-  local LONGOPTS="options,config,version,help,dir:"
+  local LONGOPTS="options,config,version,help,dir:,template:,replace,name:"
   local ARRAY="default dev/development dev/node dev/single dev/ssh other/cdd other/social productivity single"
   local setopts=""
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -246,6 +377,19 @@ EOF
       MYSCREEN_CUSTOM_CONFIG="$2"
       shift 2
       ;;
+    --replace)
+      shift 1
+      MYSCREE_UPDATE_CONF="true"
+      ;;
+    --template)
+      MYSCREEN_CREATE_ENABLED="true"
+      MYSCREEN_CREATE_TEMPLATE="$2"
+      shift 2
+      ;;
+    name)
+      MYSCREEN_NAME="$2"
+      shift 2
+      ;;
     --)
       shift 1
       break
@@ -255,18 +399,17 @@ EOF
   #set -- "$SETARGS"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Actions based on env
-  [ $# -eq 0 ] && printf_blue "Usage: $PROG [configFile] [name]" && __find_config | printf_column && return 1
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Check for required applications/Network check
   cmd_exists --error bash screen || exit 1 # exit 1 if not found
   #am_i_online --error || exit 1     # exit 1 if no internet
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # APP Variables overrides
-
+  [ "$MYSCREEN_CREATE_ENABLED" = "true" ] && __create_template "$@"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # begin main app
   case $1 in
-
   single)
     shift 1
     __launch_screen singlerc "$@"

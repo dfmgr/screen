@@ -22,7 +22,7 @@ caption string "%n %t"
 hardstatus alwayslastline " %{kb}$LOGNAME %{bk} %H %?%{kb}%{kY} %-Lw%{Yk}%:%{Yb}%{Yk}%?%{Yk} %n%f* %t %{kY}%+Lw %-="
 # huge scrollback buffer
 defscrollback 5000
-# no welcome message
+# welcome message
 startup_message off
 # Display notification when bell is detected for a window
 bell_msg "Bell detected in %t (%n)!"
