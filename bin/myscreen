@@ -411,7 +411,7 @@ EOF
   #am_i_online --error || exit 1     # exit 1 if no internet
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # APP Variables overrides
-  [ "$MYSCREEN_CREATE_ENABLED" = "true" ] && __create_windows "$@"
+  [ "$MYSCREEN_CREATE_ENABLED" = "true" ] && __create_template "$@"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # begin main app
   case $1 in
