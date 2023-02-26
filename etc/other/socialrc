@@ -19,7 +19,8 @@ defutf8 on
 caption always
 caption string "%n %t"
 # Set the status bar
-hardstatus alwayslastline " %{kb}$LOGNAME %{bk} %H %?%{kb}%{kY} %-Lw%{Yk}%:%{Yb}%{Yk}%?%{Yk} %n%f* %t %{kY}%+Lw %-="
+hardstatus alwayslastline
+hardstatus string '%{= Kd} %{= Kd}%-w%{= Kr}[%{= KW}%n %t%{= Kr}]%{= Kd}%+w %-= %{KG} %H%{KW} | %?%{KY}LSF: %101`%{KW} | %?%D %M %d %Y%{= Kc} %C%A%{-}'
 # huge scrollback buffer
 defscrollback 5000
 # no welcome message
@@ -87,4 +88,3 @@ bindkey -m "^[[25S" stuff \025
 # Scroll down more
 bindkey -d "^[[25T" eval copy "stuff \004"
 bindkey -m "^[[25T" stuff \004
-
