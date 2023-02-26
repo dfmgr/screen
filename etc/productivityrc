@@ -38,11 +38,11 @@ mousetrack off
 # default windows
 screen -t nodejs     1 $SHELL
 screen -t devel      2 $SHELL
-screen -t devel      3 $SHELL
-screen -t ssh        4 sh -c 'while :;do myssh;sleep 1;done'
-screen -t bash       5 bash
-screen -t fish       6 fish
-screen -t zsh        7 zsh
+screen -t edit       3 $SHELL
+screen -t bash       4 bash
+screen -t fish       5 fish
+screen -t zsh        6 zsh
+screen -t ssh        7 sh -c 'while :;do myssh;sleep 1;done'
 screen -t menu       8 sh -c 'while :;do mymenu;sleep 1;done'
 screen -t media      9 sh -c 'while :;do multimedia;sleep 1;done'
 # window numbering starts at 1 not 0

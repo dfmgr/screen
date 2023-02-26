@@ -35,12 +35,12 @@ nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
 # default windows
-screen -t primary    1 $SHELL
+screen -t main       1 $SHELL
 screen -t twitter    2 rainbowstream
 screen -t mastadon   3 tootstream
 screen -t irc        4 irssi
 screen -t mail       5 neomutt
-screen -t menu       6 sh -c 'while :;do mymenu;sleep 1; done'
+screen -t menu       6 sh -c 'while :;do mymenu;sleep 1; done;$SHELL'
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1

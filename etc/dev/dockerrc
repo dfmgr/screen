@@ -35,12 +35,13 @@ nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
 # default windows
-screen -t main       1 bash
-screen -t remote     2 sh -c 'while :;do myssh;sleep 1;done'
+screen -t remote     1 sh -c 'while :;do myssh;sleep 1;done'
+screen -t docker     2 bash
 screen -t devel      3 bash
-screen -t editor     4 bash
-screen -t testing    5 bash
-screen -t docker     6 bash
+screen -t build      4 bash
+screen -t editor     5 bash
+screen -t testing    6 bash
+screen -t logs       7 bash
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1

@@ -36,10 +36,11 @@ nethack on
 mousetrack off
 # default windows
 screen -t dev      1 $SHELL
-screen -t test     2 $SHELL
-screen -t server   3 sh -c "node-dev;$SHELL"
-screen -t ide      4 sh -c "myeditor .;$SHELL"
-screen -t browser  5 sh -c "mybrowser http://localhost:$NODE_PORT;$SHELL"
+screen -t ide      2 sh -c "myeditor .;$SHELL"
+screen -t test     3 $SHELL
+screen -t browser  4 sh -c "mybrowser http://localhost:$NODE_PORT;$SHELL"
+screen -t client   5 sh -c "node-dev;$SHELL"
+screen -t server   6 sh -c "node-dev;$SHELL"
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1

@@ -35,8 +35,8 @@ nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
 # default windows
-screen -t main       1 $SHELL
-screen -t shell      2 $SHELL
+screen -t shell      1 $SHELL
+screen -t main       2 $SHELL
 screen -t devel      3 $SHELL
 screen -t editor     4 $SHELL
 screen -t testing    5 $SHELL
