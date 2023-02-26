@@ -102,12 +102,12 @@ EOF
   __create_windows() {
     local count=0
     local windows="${*//,/ }"
-    [ "$windows" = "" ] && printf 'screen -t main       1 $SHELL' && return
+    [ "$windows" = "" ] && printf 'screen -t main       1 bash' && return
     for window in $windows; do
       count=$((count + 1))
       win="$(echo "$window" | awk -F ':' '{print $1}' || echo '')"
       cmd="$(echo "$window" | awk -F ':' '{print $2}' || echo '')"
-      printf 'screen -t %s       %s %s\n' "${win:-$window}" "$count" "${cmd:-\$SHELL}"
+      printf 'screen -t %s       %s %s\n' "${win:-$window}" "$count" "${cmd:-bash}"
     done
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -116,7 +116,7 @@ EOF
     local win_names="$*"
     cat <<EOF | tee
 # set session name
-sessionname template
+sessionname ${name:-template}
 # search | name for dynamic window titles
 shelltitle '\$|bash'
 # Detect activity in new windows
@@ -124,7 +124,7 @@ defmonitor on
 # Turn your hardstatus line into a dynamic urxvt|xterm|aterm window title
 backtick 1 5 5 true
 termcapinfo rxvt* 'hs:ts=\E]2;:fs=\007:ds=\E]2;\007'
-termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
+termcapinfo xterm** 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
 termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
 terminfo vt100* ms:AL=\E[%p1%dL:DL=\E[%p1%dM:UP=\E[%p1%dA:DO=\E[%p1%dB:LE=\E[%
 attrcolor b ".I"
@@ -136,7 +136,7 @@ defutf8 on
 caption always
 caption string "%n %t"
 # Set the status bar
-hardstatus alwayslastline
+#hardstatus alwayslastline
 hardstatus string '%{= Kd} %{= Kd}%-w%{= Kr}[%{= KW}%n %t%{= Kr}]%{= Kd}%+w %-= %{KG} %H%{KW} | %?%{KY}LSF: %101\`%{KW} | %?%D %M %d %Y%{= Kc} %C%A%{-}'
 # huge scrollback buffer
 defscrollback 5000
@@ -209,8 +209,8 @@ EOF
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   __create_template() {
-    name="$(basename "$MYSCREEN_CREATE_TEMPLATE")"
-    dir="$(dirname "$(realpath "$MYSCREEN_CREATE_TEMPLATE")")"
+    name="$(basename "$MYSCREEN_CREATE_TEMPLATE" 2>/dev/null)"
+    dir="$(dirname "$(realpath "$MYSCREEN_CREATE_TEMPLATE")" 2>/dev/null)"
     [ "$MYSCREE_UPDATE_CONF" = "true" ] && [ -f "$dir/${name}" ] && rm -f "$dir/${name}"
     [ -f "$dir/${name}" ] && printf_exit "File $dir/${name} exists"
     printf_cyan "Creating $dir/${name}"
@@ -225,7 +225,7 @@ EOF
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   __launch_screen() {
-    local screen_input screen_config screen_name="$MYSCREEN_NAME" customConf="${1:-$MYSCREEN_CUSTOM_CONFIG}"
+    local screen_input screen_config custom_screen_name="$MYSCREEN_NAME" customConf="${1:-$MYSCREEN_CUSTOM_CONFIG}"
     customConf="${customConf//$MYSCREEN_HOME/}"
     if [ -f "${customConf}" ]; then
       shift 1
@@ -255,13 +255,15 @@ EOF
       screen_input="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
       screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
     else
-      screen_name="default"
+      screen_name="set_default_rc"
       screen_config="${MYSCREEN_DEFAULT:-defaultrc}"
     fi
-    if [ "$screen_name" = "default" ]; then
+    if [ "$screen_name" = "set_default_rc" ]; then
       if [ -f "$MYSCREEN_HOME/${screen_config}" ]; then
+        screen_name="default"
         screen_config="$MYSCREEN_HOME/${screen_config}"
       elif [ -f "$MYSCREEN_HOME/${screen_config}rc" ]; then
+        screen_name="default"
         screen_config="$MYSCREEN_HOME/${screen_config}rc"
       else
         printf_yellow "$MYSCREEN_HOME/${screen_config} does not exist"
@@ -269,6 +271,7 @@ EOF
       fi
     fi
     ARGS="${*:-}"
+    screen_name="${custom_screen_name:-$screen_name}"
     screen_name="$(basename "${screen_name:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
     export SCREEN_NAME="$screen_name"
     screen -R -S $SCREEN_NAME -c "$screen_config" ${ARGS}
@@ -387,7 +390,7 @@ EOF
       MYSCREEN_CREATE_TEMPLATE="$2"
       shift 2
       ;;
-    name)
+    --name)
       MYSCREEN_NAME="$2"
       shift 2
       ;;
@@ -400,17 +403,22 @@ EOF
   #set -- "$SETARGS"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Actions based on env
-
+  [ "$MYSCREEN_CREATE_ENABLED" = "true" ] && [ -z "$MYSCREEN_CREATE_TEMPLATE" ] && __help
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Check for required applications/Network check
   cmd_exists --error bash screen || exit 1 # exit 1 if not found
   #am_i_online --error || exit 1     # exit 1 if no internet
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # APP Variables overrides
-  [ "$MYSCREEN_CREATE_ENABLED" = "true" ] && __create_template "$@"
+  [ "$MYSCREEN_CREATE_ENABLED" = "true" ] && __create_windows "$@"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # begin main app
   case $1 in
+  create)
+    shift 1
+    __create_windows "$@"
+    exit $?
+    ;;
   single)
     shift 1
     __launch_screen singlerc "$@"

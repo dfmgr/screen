@@ -13,7 +13,7 @@
 # @Other         :
 # @Resource      :
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[ -f "$(builtin type -P myscreen 2>/dev/null)" ] && [ -f "$(builtin type -P screen 2>/dev/null)" ] && alias screen='\myscreen single ' || alias screen='\screen -t default '
+[ -f "$(builtin type -P myscreen 2>/dev/null)" ] && [ -f "$(builtin type -P screen 2>/dev/null)" ] && alias screenrc='\myscreen single ' || alias screenrc='\screen -t default '
 [ -f "$HOME/.config/screen/dev/sshrc" ] && [ -f "$(builtin type -P screen 2>/dev/null)" ] && alias screen-ssh='\screen -c $HOME/.config/screen/dev/sshrc ' || alias screen-ssh='\screen -t ssh '
 [ -f "$HOME/.config/screen/singlerc" ] && [ -f "$(builtin type -P screen 2>/dev/null)" ] && alias screen-single='\screen -c $HOME/.config/screen/singlerc ' || alias screen-single='\screen -t single '
 [ -f "$HOME/.config/screen/dev/noderc" ] && [ -f "$(builtin type -P screen 2>/dev/null)" ] && alias screen-node='\screen -c $HOME/.config/screen/dev/noderc ' || alias screen-node='\screen -t node '
