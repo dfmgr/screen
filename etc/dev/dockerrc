@@ -1,5 +1,5 @@
 # set session name
-sessionname social
+sessionname development
 # search | name for dynamic window titles
 shelltitle '$|bash'
 # Detect activity in new windows
@@ -23,7 +23,7 @@ hardstatus alwayslastline
 hardstatus string '%{= Kd} %{= Kd}%-w%{= Kr}[%{= KW}%n %t%{= Kr}]%{= Kd}%+w %-= %{KG} %H%{KW} | %?%{KY}LSF: %101`%{KW} | %?%D %M %d %Y%{= Kc} %C%A%{-}'
 # huge scrollback buffer
 defscrollback 5000
-# no welcome message
+# welcome message
 startup_message off
 # Display notification when bell is detected for a window
 bell_msg "Bell detected in %t (%n)!"
@@ -35,12 +35,12 @@ nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
 # default windows
-screen -t primary    1 $SHELL
-screen -t twitter    2 rainbowstream
-screen -t mastadon   3 tootstream
-screen -t irc        4 irssi
-screen -t mail       5 neomutt
-screen -t menu       6 sh -c 'while :;do mymenu;sleep 1; done'
+screen -t main       1 bash
+screen -t remote     2 sh -c 'while :;do myssh;sleep 1;done'
+screen -t devel      3 bash
+screen -t editor     4 bash
+screen -t testing    5 bash
+screen -t docker     6 bash
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1
