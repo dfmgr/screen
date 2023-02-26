@@ -215,6 +215,7 @@ EOF
     [ "$MYSCREE_UPDATE_CONF" = "true" ] && [ -f "$dir/${name}" ] && rm -f "$dir/${name}"
     [ -f "$dir/${name}" ] && printf_exit "File $dir/${name} exists"
     printf_cyan "Creating $dir/${name}"
+    [ -d "$dir" ] || mkdir -p "$dir"
     __template "$@" | tee "$dir/${name}" &>/dev/null
     if [ -f "$dir/${name}" ]; then
       printf_green "Created $dir/${name}"
