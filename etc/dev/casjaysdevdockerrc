@@ -37,15 +37,14 @@ nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack on
 # default windows
-screen -t home         1 sh -c 'cd ~;$SHELL'
-screen -t shell        2 $SHELL
-screen -t menu         3 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         4 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         5 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         6 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         7 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         8 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         9 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
+screen -t mgr        1 sh -c "builtin cd $HOME/Projects/github/dockermgr;$SHELL"
+screen -t build      2 sh -c "builtin cd $HOME/Projects/github/casjaysdevdocker;$SHELL"
+screen -t devel      3 $SHELL
+screen -t editor     4 $SHELL
+screen -t testing    5 $SHELL
+screen -t docker     6 $SHELL
+screen -t other      7 $SHELL
+screen -t remote     8 sh -c 'while :;do myssh;sleep 1;done'
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1
