@@ -35,7 +35,7 @@ altscreen on
 # print wackier status messages
 nethack on
 # mouse tracking allows to switch region focus by clicking
-mousetrack on
+mousetrack off
 # default windows
 screen -t mgr        1 sh -c "builtin cd $HOME/Projects/github/dockermgr;$SHELL"
 screen -t build      2 sh -c "builtin cd $HOME/Projects/github/casjaysdevdocker;$SHELL"

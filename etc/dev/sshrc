@@ -35,7 +35,7 @@ altscreen on
 # print wackier status messages
 nethack on
 # mouse tracking allows to switch region focus by clicking
-mousetrack on
+mousetrack off
 # default windows
 screen -t home         1 sh -c 'cd ~;$SHELL'
 screen -t shell        2 $SHELL
