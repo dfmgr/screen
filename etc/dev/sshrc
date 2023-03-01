@@ -1,3 +1,13 @@
+# default windows
+screen -t home         1 sh -c 'cd ~;$SHELL'
+screen -t shell        2 $SHELL
+screen -t menu         3 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
+screen -t menu         4 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
+screen -t menu         5 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
+screen -t menu         6 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
+screen -t menu         7 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
+screen -t menu         8 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
+screen -t menu         9 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
 # Remap control+a
 escape ^Xx
 # set session name
@@ -8,9 +18,9 @@ shelltitle '$|bash'
 defmonitor on
 # Turn your hardstatus line into a dynamic urxvt|xterm|aterm window title
 backtick 1 5 5 true
-#termcapinfo rxvt* 'hs:ts=\E]2;:fs=\007:ds=\E]2;\007'
-#termcapinfo xterm* 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
-#termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
+termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
+termcapinfo rxvt* 'hs:ts=\E]2;:fs=\007:ds=\E]2;\007'
+termcapinfo xterm* 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
 #terminfo vt100* ms:AL=\E[%p1%dL:DL=\E[%p1%dM:UP=\E[%p1%dA:DO=\E[%p1%dB:LE=\E[%
 attrcolor b ".I"
 term "xterm-256color"
@@ -36,16 +46,6 @@ altscreen on
 nethack on
 # mouse tracking allows to switch region focus by clicking
 mousetrack off
-# default windows
-screen -t home         1 sh -c 'cd ~;$SHELL'
-screen -t shell        2 $SHELL
-screen -t menu         3 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         4 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         5 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         6 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         7 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         8 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
-screen -t menu         9 sh -c 'while :;do myssh;sleep 1;done;$SHELL'
 # window numbering starts at 1 not 0
 select 1
 bind c screen 1
