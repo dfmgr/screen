@@ -1,12 +1,12 @@
 # default windows
-screen -t mgr                1 sh -c "builtin cd $HOME/Projects/github/dockermgr;$SHELL"
-screen -t build              2 sh -c "builtin cd $HOME/Projects/github/casjaysdevdocker;$SHELL"
-screen -t scripts            3 sh -c "builtin cd $HOME/Projects/github/casjay-dotfiles/scripts;$SHELL"
-screen -t editor             4 $SHELL
-screen -t testing            5 $SHELL
-screen -t docker             6 $SHELL
-screen -t other              7 $SHELL
-screen -t remote             8 sh -c 'while :;do myssh;sleep 1;done'
+screen -t scripts            1 sh -c "builtin cd $HOME/Projects/github/casjay-dotfiles/scripts;$SHELL"
+screen -t mgr                2 sh -c "builtin cd $HOME/Projects/github/dockermgr;$SHELL"
+screen -t build              3 sh -c "builtin cd $HOME/Projects/github/casjaysdevdocker;$SHELL"
+screen -t editor             4 sh -c "builtin cd $HOME/Projects/github/casjaysdevdocker;$SHELL"
+screen -t testing            5 sh -c "builtin cd $HOME/Projects/github/casjaysdevdocker;$SHELL"
+screen -t docker             6 sh -c "builtin cd $HOME/Projects/github/casjaysdevdocker;$SHELL"
+screen -t logging            7 sh -c "builtin cd $HOME/Projects/github/casjaysdevdocker;$SHELL"
+screen -t remote             8 sh -c 'while :;do clear;myssh;sleep 2;done'
 # Remap control+a to control+x
 escape ^Xx
 # set session name
