@@ -1,10 +1,11 @@
 # default windows
-screen -t dev      1 $SHELL
-screen -t ide      2 sh -c "myeditor .;$SHELL"
-screen -t test     3 $SHELL
-screen -t browser  4 sh -c "mybrowser http://localhost:$NODE_PORT;$SHELL"
-screen -t client   5 sh -c "node-dev;$SHELL"
-screen -t server   6 sh -c "node-dev;$SHELL"
+screen -t dev        1 $SHELL
+screen -t ide        2 sh -c "myeditor .;$SHELL"
+screen -t test       3 $SHELL
+screen -t browser    4 sh -c "mybrowser http://localhost:$NODE_PORT;$SHELL"
+screen -t client     5 sh -c "node-dev;$SHELL"
+screen -t server     6 sh -c "node-dev;$SHELL"
+screen -t database   7 sh -c "node-dev;$SHELL"
 # Remap control+a
 escape ^Xx
 # set session name
