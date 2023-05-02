@@ -175,6 +175,9 @@ RUBY_GEMS=""
 PYTHON_PIP=""
 PHP_COMPOSER=""
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Run custom actions
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Show a custom message after install
 __run_post_message() {
   true
@@ -197,7 +200,7 @@ __run_prepost_install() {
 # run after primary post install function
 __run_post_install() {
   local getRunStatus=0
-  __symlink "$APPDIR/defaultrc" "$HOME/.screenrc"
+  [ -L "$HOME/.screenrc" ] || __symlink "$APPDIR/defaultrc" "$HOME/.screenrc"
   if ! grep -qs '# import screen aliases' "$HOME/.config/misc/shell/aliases/00-aliases.sh"; then
     printf "# import screen aliases\n. ~/.config/screen/aliases\n" >>"$HOME/.config/misc/shell/aliases/00-aliases.sh"
   fi
