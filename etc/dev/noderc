@@ -16,10 +16,6 @@ shelltitle '$|bash'
 defmonitor on
 # Turn your hardstatus line into a dynamic urxvt|xterm|aterm window title
 backtick 1 5 5 true
-termcap  vt100* ms:AL=\E[%dL:DL=\E[%dM:UP=\E[%dA:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC
-termcapinfo rxvt* 'hs:ts=\E]2;:fs=\007:ds=\E]2;\007'
-termcapinfo xterm* 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm;ti@:te@:ta@:fs=\E[%sm:'
-#terminfo vt100* ms:AL=\E[%p1%dL:DL=\E[%p1%dM:UP=\E[%p1%dA:DO=\E[%p1%dB:LE=\E[%
 attrcolor b ".I"
 term "xterm-256color"
 defbce on
