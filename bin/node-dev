@@ -1,65 +1,134 @@
 #!/usr/bin/env bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version       : 202108010014-git
+##@Version       : 202601061012-git
 # @Author        : Jason Hempstead
 # @Contact       : jason@casjaysdev.pro
-# @License       : LICENSE.md
+# @License       : WTFPL
 # @ReadME        : node-dev --help
 # @Copyright     : Copyright: (c) 2021 Jason Hempstead, Casjays Developments
 # @Created       : Friday, Dec 03, 2021 10:28 EST
 # @File          : node-dev
-# @Description   : nodejs env setup
+# @Description   : Node.js development environment setup
+# @Changelog     : Refactored for self-contained operation
 # @TODO          :
 # @Other         :
 # @Resource      :
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-node_dev_main() {
-  PROG="$(basename "$0" 2>/dev/null)"
-  VERSION="202108010014-git"
-  RUN_USER="${SUDO_USER:-${USER}}"
-  USER="${SUDO_USER:-${USER}}"
-  HOME="${USER_HOME:-${HOME}}"
-  SRC_DIR="${BASH_SOURCE%/*}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Set bash options
-  if [[ "$1" == "--debug" ]]; then shift 1 && set -xo pipefail && export SCRIPT_OPTS="--debug" && export _DEBUG="on"; fi
+# Script variables
+PROG="node-dev"
+VERSION="202601061012-git"
+USER="${SUDO_USER:-${USER}}"
+HOME="${USER_HOME:-${HOME}}"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Environment Detection
+__get_os() {
+  case "$(uname -s)" in
+    Linux*) echo "linux" ;;
+    Darwin*) echo "mac" ;;
+    *BSD*) echo "bsd" ;;
+    MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
+    *) echo "unknown" ;;
+  esac
+}
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Main function file
-  if [ -f "$SRC_DIR/functions.bash" ]; then
-    local FUNCTIONS_DIR="$SRC_DIR"
-    . "$FUNCTIONS_DIR/functions.bash"
-  elif [ -f "$HOME/.local/bin/functions.bash" ]; then
-    local FUNCTIONS_DIR="$HOME/.local/bin"
-    . "$FUNCTIONS_DIR/functions.bash"
-  else
-    printf "\t\t\033[0;31m%s \033[0m\n" "Couldn't source the functions file from ${FUNCTIONS_DIR:-$SRC_DIR}"
-    return 1
+__is_remote() {
+  [ -n "${SSH_CLIENT:-}" ] || [ -n "${SSH_TTY:-}" ] || [ -n "${SSH_CONNECTION:-}" ]
+}
+
+__has_display() {
+  [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Core helper functions
+__cmd_exists() { command -v "$1" >/dev/null 2>&1; }
+
+__is_running() {
+  local proc="$1"
+  case "$(__get_os)" in
+    mac) pgrep -x "$proc" >/dev/null 2>&1 ;;
+    windows) tasklist 2>/dev/null | grep -qi "$proc" ;;
+    *) pgrep -x "$proc" >/dev/null 2>&1 || pgrep -f "$proc" >/dev/null 2>&1 ;;
+  esac
+}
+
+__printf_color() {
+  local color="${2:-0}"
+  printf "\033[0;%sm%s\033[0m\n" "$color" "$1"
+}
+__printf_red() { __printf_color "$1" "31"; }
+__printf_green() { __printf_color "$1" "32"; }
+__printf_yellow() { __printf_color "$1" "33"; }
+__printf_blue() { __printf_color "$1" "34"; }
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Smart notifications
+__notifications() {
+  local title="$1" msg="$2"
+
+  # Remote/no display - just print to stderr
+  if __is_remote || ! __has_display; then
+    printf "[%s] %s\n" "$title" "$msg" >&2
+    return 0
   fi
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # helper functions - See github.com/dfmgr/misc/bin/functions.bash
-  __version() { app_version; }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __help() {
-    app_help "4" "Usage: node-dev  " \
-      "--options                              -  Show all options" \
-      "-c, --config                           -  Create config file" \
-      "-v, --version                          -  Display version" \
-      "-h, --help                             -  Display help"
 
-    exit $?
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __list_options() { printf_custom "$1" "$2: $(echo ${3:-$ARRAY} | __sed 's|:||g;s|'$4'| '$5'|g')" 2>/dev/null; }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __gen_config() {
-    printf_green "Generating the config file in"
-    printf_green "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE"
-    [ -d "$NODE_DEV_CONFIG_DIR" ] || mkdir -p "$NODE_DEV_CONFIG_DIR"
-    [ -d "$NODE_DEV_CONFIG_BACKUP_DIR" ] || mkdir -p "$NODE_DEV_CONFIG_BACKUP_DIR"
-    [ -f "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE" ] &&
-      cp -Rf "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE" "$NODE_DEV_CONFIG_BACKUP_DIR/$NODE_DEV_CONFIG_FILE.$$"
-    cat <<EOF >"$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE"
+  # GUI notifications based on OS
+  case "$(__get_os)" in
+    mac)
+      osascript -e "display notification \"$msg\" with title \"$title\"" 2>/dev/null && return 0
+      ;;
+    linux|bsd)
+      if __cmd_exists notify-send; then
+        notify-send "$title" "$msg" 2>/dev/null && return 0
+      fi
+      ;;
+    windows)
+      if __cmd_exists powershell.exe; then
+        powershell.exe -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('$msg', '$title')" 2>/dev/null && return 0
+      fi
+      ;;
+  esac
+
+  # Fallback
+  printf "[%s] %s\n" "$title" "$msg" >&2
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Version and help
+__version() { echo "$PROG $VERSION"; }
+
+__help() {
+  cat <<EOF
+$PROG $VERSION - Node.js development environment setup
+
+Usage: $PROG [options] [directory]
+
+Options:
+  -v, --version    Show version
+  -h, --help       Show this help
+  --dir <path>     Set working directory
+  --config         Create config file
+  --options        Show all options
+
+Arguments:
+  directory        Directory containing package.json
+
+Description:
+  Sets up a Node.js development environment by installing dependencies
+  and running the dev script in a screen session.
+
+Examples:
+  $PROG                     Run in current directory
+  $PROG ~/projects/myapp    Run in specified directory
+EOF
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Config file management
+__gen_config() {
+  __printf_green "Generating the config file in"
+  __printf_green "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE"
+  [ -d "$NODE_DEV_CONFIG_DIR" ] || mkdir -p "$NODE_DEV_CONFIG_DIR"
+  [ -d "$NODE_DEV_CONFIG_BACKUP_DIR" ] || mkdir -p "$NODE_DEV_CONFIG_BACKUP_DIR"
+  [ -f "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE" ] &&
+    cp -Rf "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE" "$NODE_DEV_CONFIG_BACKUP_DIR/$NODE_DEV_CONFIG_FILE.$$"
+  cat <<EOF >"$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE"
 # Settings for node-dev
 
 # Notification settings
@@ -75,30 +144,38 @@ NODE_DEV_OUTPUT_COLOR_GOOD="${NODE_DEV_OUTPUT_COLOR_GOOD:-2}"
 NODE_DEV_OUTPUT_COLOR_ERROR="${NODE_DEV_OUTPUT_COLOR_ERROR:-1}"
 
 EOF
-    if [ -f "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE" ]; then
-      [[ "$INIT_CONFIG" = "TRUE" ]] || printf_green "Your config file for $APPNAME has been created"
-      true
-    else
-      printf_red "Failed to create the config file"
-      false
-    fi
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Additional functions
-  __node_pkg() {
-    NODE_CMD="$(node -p "require('./package').scripts" 2>/dev/null | grep -sq 'dev')"
-    [ -n "$NODE_CMD" ] && return 0 || return 1
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __npm_run() {
-    [ -f "$(type -P npm)" ] || return 1
-    eval npm "$@"
-    return $?
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Defaults
-  local exitCode=
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if [ -f "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE" ]; then
+    [[ "$INIT_CONFIG" = "TRUE" ]] || __printf_green "Your config file for $PROG has been created"
+    return 0
+  else
+    __printf_red "Failed to create the config file"
+    return 1
+  fi
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Additional helper functions
+__list_options() {
+  printf '%s: %s\n' "$1" "$2" 2>/dev/null
+}
+
+__node_pkg() {
+  NODE_CMD="$(node -p "require('./package').scripts" 2>/dev/null | grep -sq 'dev')"
+  [ -n "$NODE_CMD" ] && return 0 || return 1
+}
+
+__npm_run() {
+  [ -f "$(type -P npm)" ] || return 1
+  eval npm "$@"
+  return $?
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Main function
+main() {
+  local exitCode=0
+
+  # Set bash options for debug
+  if [[ "$1" == "--debug" ]]; then shift 1 && set -xo pipefail && export SCRIPT_OPTS="--debug" && export _DEBUG="on"; fi
+
   # Application Folders
   local NODE_DEV_LOG_DIR="${NODE_DEV_LOG_DIR:-$HOME/.local/log/node-dev}"
   local NODE_DEV_CACHE_DIR="${NODE_DEV_CACHE_DIR:-$HOME/.cache/node-dev}"
@@ -110,73 +187,65 @@ EOF
   local NODE_DEV_GOOD_MESSAGE="${NODE_DEV_GOOD_MESSAGE:-Everything Went OK}"
   local NODE_DEV_ERROR_MESSAGE="${NODE_DEV_ERROR_MESSAGE:-Well something seems to have gone wrong}"
   local NODE_DEV_NOTIFY_ENABLED="${NODE_DEV_NOTIFY_ENABLED:-yes}"
-  local NODE_DEV_NOTIFY_CLIENT_NAME="${NOTIFY_CLIENT_NAME:-$APPNAME}"
+  local NODE_DEV_NOTIFY_CLIENT_NAME="${NOTIFY_CLIENT_NAME:-$PROG}"
   local NODE_DEV_NOTIFY_CLIENT_ICON="${NOTIFY_CLIENT_ICON:-$NODE_DEV_NOTIFY_CLIENT_ICON}"
   local NODE_DEV_OUTPUT_COLOR="${NODE_DEV_OUTPUT_COLOR:-5}"
   local NODE_DEV_OUTPUT_COLOR_GOOD="${NODE_DEV_OUTPUT_COLOR_GOOD:-2}"
   local NODE_DEV_OUTPUT_COLOR_ERROR="${NODE_DEV_OUTPUT_COLOR_ERROR:-1}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Generate config files
   [ -f "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE" ] || [[ "$*" = *config ]] || INIT_CONFIG="${INIT_CONFIG:-TRUE}" __gen_config ${SETARGS:-$@}
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Import config
   [ -f "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE" ] && . "$NODE_DEV_CONFIG_DIR/$NODE_DEV_CONFIG_FILE"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Ensure Directories exist
   [ -d "$NODE_DEV_LOG_DIR" ] || mkdir -p "$NODE_DEV_LOG_DIR" &>/dev/null
   [ -d "$NODE_DEV_TEMP_DIR" ] || mkdir -p "$NODE_DEV_TEMP_DIR" &>/dev/null
   [ -d "$NODE_DEV_CACHE_DIR" ] || mkdir -p "$NODE_DEV_CACHE_DIR" &>/dev/null
   local NODE_DEV_TEMP_FILE="${NODE_DEV_TEMP_FILE:-$(mktemp $NODE_DEV_TEMP_DIR/XXXXXX 2>/dev/null)}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Setup trap to remove temp file
   trap 'exitCode=${exitCode:-$?};[ -n "$NODE_DEV_TEMP_FILE" ] && [ -f "$NODE_DEV_TEMP_FILE" ] && rm -Rf "$NODE_DEV_TEMP_FILE" &>/dev/null' EXIT
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Setup notification function
   if [ "$NODE_DEV_NOTIFY_ENABLED" = "yes" ]; then
-    __notifications() {
-      export NOTIFY_GOOD_MESSAGE="${NODE_DEV_GOOD_MESSAGE}"
-      export NOTIFY_ERROR_MESSAGE="${NODE_DEV_ERROR_MESSAGE}"
-      export NOTIFY_CLIENT_NAME="${NODE_DEV_NOTIFY_CLIENT_NAME}"
-      export NOTIFY_CLIENT_ICON="${NODE_DEV_NOTIFY_CLIENT_ICON}"
-      notifications "$@" && exitCode=0 || exitCode=1
-      unset NOTIFY_CLIENT_NAME NOTIFY_CLIENT_ICON NOTIFY_GOOD_MESSAGE NOTIFY_ERROR_MESSAGE
-      return ${exitCode:-$?}
+    __node_dev_notifications() {
+      __notifications "$NODE_DEV_NOTIFY_CLIENT_NAME" "$@"
     }
   else
-    __notifications() { false; }
+    __node_dev_notifications() { false; }
   fi
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Show warn message if variables are missing
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument/Option settings
   local SETARGS="$*"
   local SHORTOPTS=""
   local LONGOPTS="options,config,version,help,dir:"
   local ARRAY=""
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  local setopts=""
+
   # Setup application options
-  local setopts=$(getopt -o "$SHORTOPTS" --long "$LONGOPTS" -a -n "$(basename "$0" 2>/dev/null)" -- "$@" 2>/dev/null)
+  setopts=$(getopt -o "$SHORTOPTS" --long "$LONGOPTS" -a -n "$(basename "$0" 2>/dev/null)" -- "$@" 2>/dev/null)
   eval set -- "${setopts[@]}" 2>/dev/null
   while :; do
     case "$1" in
     --options)
       shift 1
-      [ -n "$1" ] || printf_blue "Current options for ${PROG:-$APPNAME}"
-      [ -z "$SHORTOPTS" ] || __list_options "5" "Short Options" "-$SHORTOPTS" ',' '-'
-      [ -z "$LONGOPTS" ] || __list_options "5" "Long Options" "--$LONGOPTS" ',' '--'
-      [ -z "$ARRAY" ] || __list_options "5" "Base Options" "$ARRAY" ',' ''
-      exit $?
+      [ -n "$1" ] || __printf_blue "Current options for ${PROG}"
+      [ -z "$SHORTOPTS" ] || __list_options "Short Options" "-$SHORTOPTS"
+      [ -z "$LONGOPTS" ] || __list_options "Long Options" "--$LONGOPTS"
+      [ -z "$ARRAY" ] || __list_options "Base Options" "$ARRAY"
+      exit 0
       ;;
-    --version)
+    -v|--version)
       shift 1
       __version
-      exit $?
+      exit 0
       ;;
-    --help)
+    -h|--help)
       shift 1
       __help
-      exit $?
+      exit 0
       ;;
     --config)
       shift 1
@@ -193,32 +262,41 @@ EOF
       ;;
     esac
   done
-  #set -- "$SETARGS"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Actions based on env
   CWD="${1:-${NODE_DEV_CWD:-$PWD}}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Check for required applications/Network check
-  cmd_exists --error bash node npm || exit 1 # exit 1 if not found
-  #am_i_online --error || exit 1     # exit 1 if no internet
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # APP Variables overrides
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Check for required applications
+  if ! __cmd_exists node; then
+    __printf_red "Error: node is not installed"
+    exit 1
+  fi
+  if ! __cmd_exists npm; then
+    __printf_red "Error: npm is not installed"
+    exit 1
+  fi
+  if ! __cmd_exists screen; then
+    __printf_red "Error: screen is not installed"
+    exit 1
+  fi
+
+  # Check for package.json
+  if [ ! -f "./package.json" ]; then
+    __printf_red "Error: No package.json found in current directory"
+    exit 1
+  fi
+
   # begin main app
   if [ -f "./package.json" ] && __node_pkg; then
     __npm_run i -D
   fi
   exec screen -dmS screen -t 9 node bash -c "cd $CWD && npm run ${NODE_CMD}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # lets exit with code
+
   return ${exitCode:-$?}
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# execute function
-node_dev_main "$@"
+# Execute
+main "$@"
+exit $?
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# End application
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# lets exit with code
-exit ${exitCode:-$?}
+# end

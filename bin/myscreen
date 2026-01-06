@@ -1,79 +1,145 @@
 #!/usr/bin/env bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version       : 202108010014-git
+##@Version       : 202601061012-git
 # @Author        : Jason Hempstead
 # @Contact       : jason@casjaysdev.pro
-# @License       : LICENSE.md
+# @License       : WTFPL
 # @ReadME        : myscreen --help
 # @Copyright     : Copyright: (c) 2022 Jason Hempstead, Casjays Developments
 # @Created       : Saturday, Jan 22, 2022 13:16 EST
 # @File          : myscreen
-# @Description   : launch screen using a custom config
+# @Description   : Launch screen using a custom config
+# @Changelog     : Refactored for self-contained operation
 # @TODO          :
 # @Other         :
 # @Resource      :
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-myscreen_main() {
-  PROG="$(basename "$0" 2>/dev/null)"
-  VERSION="202108010014-git"
-  RUN_USER="${SUDO_USER:-${USER}}"
-  USER="${SUDO_USER:-${USER}}"
-  HOME="${USER_HOME:-${HOME}}"
-  SRC_DIR="${BASH_SOURCE%/*}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Set bash options
-  if [[ "$1" == "--debug" ]]; then shift 1 && set -xo pipefail && export SCRIPT_OPTS="--debug" && export _DEBUG="on"; fi
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Main function file
-  if [ -f "$SRC_DIR/functions.bash" ]; then
-    local FUNCTIONS_DIR="$SRC_DIR"
-    . "$FUNCTIONS_DIR/functions.bash"
-  elif [ -f "$HOME/.local/bin/functions.bash" ]; then
-    local FUNCTIONS_DIR="$HOME/.local/bin"
-    . "$FUNCTIONS_DIR/functions.bash"
-  else
-    printf "\t\t\033[0;31m%s \033[0m\n" "Couldn't source the functions file from ${FUNCTIONS_DIR:-$SRC_DIR}"
-    return 1
-  fi
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # helper functions - See github.com/dfmgr/misc/bin/functions.bash
-  __version() { app_version; }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __help() { #
-    app_help "4" "Usage: myscreen [conf] [name] cmd " \
-      "default                                -  default config" \
-      "single                                 -  single config" \
-      "productivity                           -  productivity config" \
-      "dev/development                        -  dev/development config" \
-      "dev/docker                             -  dev/docker config" \
-      "dev/node                               -  dev/node config" \
-      "dev/single                             -  dev/single config" \
-      "dev/ssh                                -  dev/ssh config" \
-      "other/cdd                              -  other/cdd config" \
-      "other/social                           -  other/social config" \
-      "-c                                     -  default config" \
-      "--replace                              -  Replace an existing config " \
-      "--template                             -  Create a new config file [name] [name:cmd,dev:zsh]" \
-      "--options                              -  Show all options" \
-      "--config                               -  Create config file" \
-      "--version                              -  Display version" \
-      "--help                                 -  Display help"
+# Script variables
+PROG="myscreen"
+VERSION="202601061012-git"
+USER="${SUDO_USER:-${USER}}"
+HOME="${USER_HOME:-${HOME}}"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Environment Detection
+__get_os() {
+  case "$(uname -s)" in
+    Linux*) echo "linux" ;;
+    Darwin*) echo "mac" ;;
+    *BSD*) echo "bsd" ;;
+    MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
+    *) echo "unknown" ;;
+  esac
+}
 
-    exit $?
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __list_options() {
-    printf_custom "$1" "$2: $(echo ${3:-$ARRAY} | __sed 's|:||g;s|'$4'| '$5'|g')" 2>/dev/null
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __gen_config() {
-    printf_green "Generating the config file in"
-    printf_green "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE"
-    [ -d "$MYSCREEN_CONFIG_DIR" ] || mkdir -p "$MYSCREEN_CONFIG_DIR"
-    [ -d "$MYSCREEN_CONFIG_BACKUP_DIR" ] || mkdir -p "$MYSCREEN_CONFIG_BACKUP_DIR"
-    [ -f "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" ] &&
-      cp -Rf "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" "$MYSCREEN_CONFIG_BACKUP_DIR/$MYSCREEN_CONFIG_FILE.$$"
-    cat <<EOF >"$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE"
+__is_remote() {
+  [ -n "${SSH_CLIENT:-}" ] || [ -n "${SSH_TTY:-}" ] || [ -n "${SSH_CONNECTION:-}" ]
+}
+
+__has_display() {
+  [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Core helper functions
+__cmd_exists() { command -v "$1" >/dev/null 2>&1; }
+
+__is_running() {
+  local proc="$1"
+  case "$(__get_os)" in
+    mac) pgrep -x "$proc" >/dev/null 2>&1 ;;
+    windows) tasklist 2>/dev/null | grep -qi "$proc" ;;
+    *) pgrep -x "$proc" >/dev/null 2>&1 || pgrep -f "$proc" >/dev/null 2>&1 ;;
+  esac
+}
+
+__printf_color() {
+  local color="${2:-0}"
+  printf "\033[0;%sm%s\033[0m\n" "$color" "$1"
+}
+__printf_red() { __printf_color "$1" "31"; }
+__printf_green() { __printf_color "$1" "32"; }
+__printf_yellow() { __printf_color "$1" "33"; }
+__printf_blue() { __printf_color "$1" "34"; }
+__printf_cyan() { __printf_color "$1" "36"; }
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Smart notifications
+__notifications() {
+  local title="$1" msg="$2"
+
+  # Remote/no display - just print to stderr
+  if __is_remote || ! __has_display; then
+    printf "[%s] %s\n" "$title" "$msg" >&2
+    return 0
+  fi
+
+  # GUI notifications based on OS
+  case "$(__get_os)" in
+    mac)
+      osascript -e "display notification \"$msg\" with title \"$title\"" 2>/dev/null && return 0
+      ;;
+    linux|bsd)
+      if __cmd_exists notify-send; then
+        notify-send "$title" "$msg" 2>/dev/null && return 0
+      fi
+      ;;
+    windows)
+      if __cmd_exists powershell.exe; then
+        powershell.exe -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('$msg', '$title')" 2>/dev/null && return 0
+      fi
+      ;;
+  esac
+
+  # Fallback
+  printf "[%s] %s\n" "$title" "$msg" >&2
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Version and help
+__version() { echo "$PROG $VERSION"; }
+
+__help() {
+  cat <<EOF
+$PROG $VERSION - Launch screen using a custom config
+
+Usage: $PROG [options] [conf] [name] cmd
+
+Options:
+  -v, --version                          Show version
+  -h, --help                             Show this help
+  -c <config>                            Use specific config file
+  --dir <path>                           Set working directory
+  --name <name>                          Set session name
+  --replace                              Replace existing config
+  --template <name>                      Create new config file [name:cmd,dev:zsh]
+  --config                               Create settings config file
+  --options                              Show all options
+
+Configurations:
+  default                                Default config
+  single                                 Single config
+  productivity                           Productivity config
+  dev/development                        Development config
+  dev/docker                             Docker dev config
+  dev/node                               Node.js dev config
+  dev/single                             Single dev config
+  dev/ssh                                SSH dev config
+  other/cdd                              CDD config
+  other/social                           Social config
+
+Examples:
+  $PROG                                  Launch with default config
+  $PROG dev/node                         Launch with node dev config
+  $PROG --template myconfig main:bash,dev:zsh
+EOF
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Config file management
+__gen_config() {
+  __printf_green "Generating the config file in"
+  __printf_green "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE"
+  [ -d "$MYSCREEN_CONFIG_DIR" ] || mkdir -p "$MYSCREEN_CONFIG_DIR"
+  [ -d "$MYSCREEN_CONFIG_BACKUP_DIR" ] || mkdir -p "$MYSCREEN_CONFIG_BACKUP_DIR"
+  [ -f "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" ] &&
+    cp -Rf "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" "$MYSCREEN_CONFIG_BACKUP_DIR/$MYSCREEN_CONFIG_FILE.$$"
+  cat <<EOF >"$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE"
 # Settings for myscreen
 MYSCREEN_DEFAULT="${MYSCREEN_DEFAULT:-}"
 MYSCREEN_HOME="${MYSCREEN_HOME:-$HOME/.config/screen}"
@@ -91,111 +157,65 @@ MYSCREEN_OUTPUT_COLOR_GOOD="${MYSCREEN_OUTPUT_COLOR_GOOD:-2}"
 MYSCREEN_OUTPUT_COLOR_ERROR="${MYSCREEN_OUTPUT_COLOR_ERROR:-1}"
 
 EOF
-    if [ -f "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" ]; then
-      [[ "$INIT_CONFIG" = "TRUE" ]] || printf_green "Your config file for $APPNAME has been created"
-      true
-    else
-      printf_red "Failed to create the config file"
-      false
-    fi
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __create_windows() {
-    local count=0
-    local windows="${*//,/ }"
-    [ "$windows" = "" ] && printf 'screen -t main       1 bash' && return
-    for window in $windows; do
-      count=$((count + 1))
-      win="$(echo "$window" | awk -F ':' '{print $1}' || echo '')"
-      cmd="$(echo "$window" | awk -F ':' '{print $2}' || echo '')"
-      printf 'screen -t %s       %s %s\n' "${win:-$window}" "$count" "${cmd:-bash}"
-    done
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Additional functions
-  __cd() { builtin cd "$1" || return 1; }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __find_config() {
-    find -L "$MYSCREEN_HOME" -type f -iname '*rc' -printf '%P\n' | sed 's|rc$||g' 2>/dev/null
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __create_template() {
-    name="$(basename "$MYSCREEN_CREATE_TEMPLATE" 2>/dev/null)"
-    dir="$(dirname "$(realpath "$MYSCREEN_CREATE_TEMPLATE")" 2>/dev/null)"
-    [ "$MYSCREE_UPDATE_CONF" = "true" ] && [ -f "$dir/${name}" ] && rm -f "$dir/${name}"
-    [ -f "$dir/${name}" ] && printf_exit "File $dir/${name} exists"
-    printf_cyan "Creating $dir/${name}"
-    [ -d "$dir" ] || mkdir -p "$dir"
-    __template "$@" | tee "$dir/${name}" &>/dev/null
-    if [ -f "$dir/${name}" ]; then
-      printf_green "Created $dir/${name}"
-      exit 0
-    else
-      printf_yellow "Failed to create $dir/${name}"
-      exit 1
-    fi
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __launch_screen() {
-    local screen_input screen_config custom_screen_name="$MYSCREEN_NAME" customConf="${1:-$MYSCREEN_CUSTOM_CONFIG}"
-    customConf="${customConf//$MYSCREEN_HOME/}"
-    if [ -f "${customConf}" ]; then
-      shift 1
-      screen_config="$customConf"
-    elif [ -f "${customConf}rc" ]; then
-      shift 1
-      screen_config="${customConf}rc"
-    elif [ -f "$MYSCREEN_HOME/${customConf}" ]; then
-      shift 1
-      screen_config="$MYSCREEN_HOME/${customConf}"
-    elif [ -f "$MYSCREEN_HOME/${customConf}rc" ]; then
-      shift 1
-      screen_config="$MYSCREEN_HOME/${customConf}rc"
-    elif [ "$screen_input" = "/dev/null" ] || [ "$customConf" = "null" ]; then
-      screen_name="testing-$$"
-      screen_config="/dev/null"
-    elif [ -f "${MYSCREEN_DEFAULT}" ]; then
-      screen_input="${MYSCREEN_DEFAULT}"
-      screen_config="${MYSCREEN_DEFAULT}"
-    elif [ -f "${MYSCREEN_DEFAULT}rc" ]; then
-      screen_input="${MYSCREEN_DEFAULT}rc"
-      screen_config="${MYSCREEN_DEFAULT}rc"
-    elif [ -f "$MYSCREEN_HOME/${MYSCREEN_DEFAULT}" ]; then
-      screen_input="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}"
-      screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}"
-    elif [ -f "$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc" ]; then
-      screen_input="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
-      screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
-    else
-      screen_name="set_default_rc"
-      screen_config="${MYSCREEN_DEFAULT:-defaultrc}"
-    fi
-    [ -d "$1" ] && __cd "$1" && shift 1 || __cd "${MYSCREEN_CWD:-$PWD}"
-    if [ "$screen_name" = "set_default_rc" ]; then
-      if [ -f "$MYSCREEN_HOME/${screen_config}" ]; then
-        screen_name="default"
-        screen_config="$MYSCREEN_HOME/${screen_config}"
-      elif [ -f "$MYSCREEN_HOME/${screen_config}rc" ]; then
-        screen_name="default"
-        screen_config="$MYSCREEN_HOME/${screen_config}rc"
-      else
-        printf_yellow "$MYSCREEN_HOME/${screen_config} does not exist"
-        printf_blue "Usage: $PROG [configFile] [name]" && __find_config | printf_column && return 1
-      fi
-    fi
-    ARGS="$*"
-    screen_name="${custom_screen_name:-$screen_name}"
-    screen_name="$(basename "${screen_name:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
-    export SCREEN_NAME="$screen_name"
-    screen -R -S $SCREEN_NAME -c "$screen_config" ${ARGS}
-    exitCode=$?
-    unset SCREEN_NAME SCREENEXCHANGE SCREEN_MSGMINWAIT
-    return ${exitCode:-0}
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  __template() {
-    local win_names="$*"
-    cat <<EOF | tee
+  if [ -f "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" ]; then
+    [[ "$INIT_CONFIG" = "TRUE" ]] || __printf_green "Your config file for $PROG has been created"
+    return 0
+  else
+    __printf_red "Failed to create the config file"
+    return 1
+  fi
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Additional helper functions
+__list_options() {
+  printf '%s: %s\n' "$1" "$2" 2>/dev/null
+}
+
+__printf_column() {
+  column -t 2>/dev/null
+}
+
+__cd() { builtin cd "$1" || return 1; }
+
+__find_config() {
+  find -L "$MYSCREEN_HOME" -type f -iname '*rc' -printf '%P\n' 2>/dev/null | sed 's|rc$||g'
+}
+
+__create_windows() {
+  local count=0
+  local windows="${*//,/ }"
+  [ "$windows" = "" ] && printf 'screen -t main       1 bash' && return
+  for window in $windows; do
+    count=$((count + 1))
+    win="$(echo "$window" | awk -F ':' '{print $1}' || echo '')"
+    cmd="$(echo "$window" | awk -F ':' '{print $2}' || echo '')"
+    printf 'screen -t %s       %s %s\n' "${win:-$window}" "$count" "${cmd:-bash}"
+  done
+}
+
+__create_template() {
+  name="$(basename "$MYSCREEN_CREATE_TEMPLATE" 2>/dev/null)"
+  dir="$(dirname "$(realpath "$MYSCREEN_CREATE_TEMPLATE" 2>/dev/null)" 2>/dev/null)"
+  [ "$MYSCREE_UPDATE_CONF" = "true" ] && [ -f "$dir/${name}" ] && rm -f "$dir/${name}"
+  if [ -f "$dir/${name}" ]; then
+    __printf_red "File $dir/${name} exists"
+    exit 1
+  fi
+  __printf_cyan "Creating $dir/${name}"
+  [ -d "$dir" ] || mkdir -p "$dir"
+  __template "$@" | tee "$dir/${name}" &>/dev/null
+  if [ -f "$dir/${name}" ]; then
+    __printf_green "Created $dir/${name}"
+    exit 0
+  else
+    __printf_yellow "Failed to create $dir/${name}"
+    exit 1
+  fi
+}
+
+__template() {
+  local win_names="$*"
+  cat <<EOF | tee
 # default windows
 $(__create_windows "$win_names")
 # Remap control+a to control+x
@@ -281,11 +301,72 @@ bindkey -d "^[[25T" eval copy "stuff \004"
 bindkey -m "^[[25T" stuff \004
 
 EOF
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Defaults
-  local exitCode=
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+}
+
+__launch_screen() {
+  local screen_input screen_config custom_screen_name="$MYSCREEN_NAME" customConf="${1:-$MYSCREEN_CUSTOM_CONFIG}"
+  customConf="${customConf//$MYSCREEN_HOME/}"
+  if [ -f "${customConf}" ]; then
+    shift 1
+    screen_config="$customConf"
+  elif [ -f "${customConf}rc" ]; then
+    shift 1
+    screen_config="${customConf}rc"
+  elif [ -f "$MYSCREEN_HOME/${customConf}" ]; then
+    shift 1
+    screen_config="$MYSCREEN_HOME/${customConf}"
+  elif [ -f "$MYSCREEN_HOME/${customConf}rc" ]; then
+    shift 1
+    screen_config="$MYSCREEN_HOME/${customConf}rc"
+  elif [ "$screen_input" = "/dev/null" ] || [ "$customConf" = "null" ]; then
+    screen_name="testing-$$"
+    screen_config="/dev/null"
+  elif [ -f "${MYSCREEN_DEFAULT}" ]; then
+    screen_input="${MYSCREEN_DEFAULT}"
+    screen_config="${MYSCREEN_DEFAULT}"
+  elif [ -f "${MYSCREEN_DEFAULT}rc" ]; then
+    screen_input="${MYSCREEN_DEFAULT}rc"
+    screen_config="${MYSCREEN_DEFAULT}rc"
+  elif [ -f "$MYSCREEN_HOME/${MYSCREEN_DEFAULT}" ]; then
+    screen_input="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}"
+    screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}"
+  elif [ -f "$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc" ]; then
+    screen_input="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
+    screen_config="$MYSCREEN_HOME/${MYSCREEN_DEFAULT}rc"
+  else
+    screen_name="set_default_rc"
+    screen_config="${MYSCREEN_DEFAULT:-defaultrc}"
+  fi
+  [ -d "$1" ] && __cd "$1" && shift 1 || __cd "${MYSCREEN_CWD:-$PWD}"
+  if [ "$screen_name" = "set_default_rc" ]; then
+    if [ -f "$MYSCREEN_HOME/${screen_config}" ]; then
+      screen_name="default"
+      screen_config="$MYSCREEN_HOME/${screen_config}"
+    elif [ -f "$MYSCREEN_HOME/${screen_config}rc" ]; then
+      screen_name="default"
+      screen_config="$MYSCREEN_HOME/${screen_config}rc"
+    else
+      __printf_yellow "$MYSCREEN_HOME/${screen_config} does not exist"
+      __printf_blue "Usage: $PROG [configFile] [name]" && __find_config | __printf_column && return 1
+    fi
+  fi
+  ARGS="$*"
+  screen_name="${custom_screen_name:-$screen_name}"
+  screen_name="$(basename "${screen_name:-$screen_config}" 2>/dev/null | sed 's|rc$||g')"
+  export SCREEN_NAME="$screen_name"
+  screen -R -S $SCREEN_NAME -c "$screen_config" ${ARGS}
+  exitCode=$?
+  unset SCREEN_NAME SCREENEXCHANGE SCREEN_MSGMINWAIT
+  return ${exitCode:-0}
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Main function
+main() {
+  local exitCode=0
+
+  # Set bash options for debug
+  if [[ "$1" == "--debug" ]]; then shift 1 && set -xo pipefail && export SCRIPT_OPTS="--debug" && export _DEBUG="on"; fi
+
   # Application Folders
   local MYSCREEN_LOG_DIR="${MYSCREEN_LOG_DIR:-$HOME/.local/log/myscreen}"
   local MYSCREEN_CACHE_DIR="${MYSCREEN_CACHE_DIR:-$HOME/.cache/myscreen}"
@@ -297,57 +378,48 @@ EOF
   local MYSCREEN_GOOD_MESSAGE="${MYSCREEN_GOOD_MESSAGE:-Everything Went OK}"
   local MYSCREEN_ERROR_MESSAGE="${MYSCREEN_ERROR_MESSAGE:-Well something seems to have gone wrong}"
   local MYSCREEN_NOTIFY_ENABLED="${MYSCREEN_NOTIFY_ENABLED:-yes}"
-  local MYSCREEN_NOTIFY_CLIENT_NAME="${NOTIFY_CLIENT_NAME:-$APPNAME}"
+  local MYSCREEN_NOTIFY_CLIENT_NAME="${NOTIFY_CLIENT_NAME:-$PROG}"
   local MYSCREEN_NOTIFY_CLIENT_ICON="${NOTIFY_CLIENT_ICON:-$MYSCREEN_NOTIFY_CLIENT_ICON}"
   local MYSCREEN_OUTPUT_COLOR="${MYSCREEN_OUTPUT_COLOR:-5}"
   local MYSCREEN_OUTPUT_COLOR_GOOD="${MYSCREEN_OUTPUT_COLOR_GOOD:-2}"
   local MYSCREEN_OUTPUT_COLOR_ERROR="${MYSCREEN_OUTPUT_COLOR_ERROR:-1}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Enviroment overrides
+
+  # Environment overrides
   local MYSCREEN_CREATE_ENABLED="false"
   local MYSCREEN_DEFAULT="${MYSCREEN_DEFAULT:-default}"
   local MYSCREEN_HOME="${MYSCREEN_HOME:-$HOME/.config/screen}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Generate config files
   [ -f "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" ] || [[ "$*" = *config ]] || INIT_CONFIG="${INIT_CONFIG:-TRUE}" __gen_config ${SETARGS:-$@}
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Import config
   [ -f "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE" ] && . "$MYSCREEN_CONFIG_DIR/$MYSCREEN_CONFIG_FILE"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Ensure Directories exist
   [ -d "$MYSCREEN_LOG_DIR" ] || mkdir -p "$MYSCREEN_LOG_DIR" &>/dev/null
   [ -d "$MYSCREEN_TEMP_DIR" ] || mkdir -p "$MYSCREEN_TEMP_DIR" &>/dev/null
   [ -d "$MYSCREEN_CACHE_DIR" ] || mkdir -p "$MYSCREEN_CACHE_DIR" &>/dev/null
   local MYSCREEN_TEMP_FILE="${MYSCREEN_TEMP_FILE:-$(mktemp $MYSCREEN_TEMP_DIR/XXXXXX 2>/dev/null)}"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Setup trap to remove temp file
   trap 'exitCode=${exitCode:-$?};[ -n "$MYSCREEN_TEMP_FILE" ] && [ -f "$MYSCREEN_TEMP_FILE" ] && rm -Rf "$MYSCREEN_TEMP_FILE" &>/dev/null' EXIT
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Setup notification function
   if [ "$MYSCREEN_NOTIFY_ENABLED" = "yes" ]; then
-    __notifications() {
-      export NOTIFY_GOOD_MESSAGE="${MYSCREEN_GOOD_MESSAGE}"
-      export NOTIFY_ERROR_MESSAGE="${MYSCREEN_ERROR_MESSAGE}"
-      export NOTIFY_CLIENT_NAME="${MYSCREEN_NOTIFY_CLIENT_NAME}"
-      export NOTIFY_CLIENT_ICON="${MYSCREEN_NOTIFY_CLIENT_ICON}"
-      notifications "$@" && exitCode=0 || exitCode=1
-      unset NOTIFY_CLIENT_NAME NOTIFY_CLIENT_ICON NOTIFY_GOOD_MESSAGE NOTIFY_ERROR_MESSAGE
-      return ${exitCode:-$?}
+    __myscreen_notifications() {
+      __notifications "$MYSCREEN_NOTIFY_CLIENT_NAME" "$@"
     }
   else
-    __notifications() { false; }
+    __myscreen_notifications() { false; }
   fi
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Show warn message if variables are missing
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument/Option settings
   local SETARGS="$*"
   local SHORTOPTS="c:"
   local LONGOPTS="options,config,version,help,dir:,template:,replace,name:"
   local ARRAY="default dev/development dev/node dev/single dev/ssh other/cdd other/social productivity single"
   local setopts=""
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Setup application options
   setopts=$(getopt -o "$SHORTOPTS" --long "$LONGOPTS" -a -n "$(basename "$0" 2>/dev/null)" -- "$@" 2>/dev/null)
   eval set -- "${setopts[@]}" 2>/dev/null
@@ -355,21 +427,21 @@ EOF
     case "$1" in
     --options)
       shift 1
-      [ -n "$1" ] || printf_blue "Current options for ${PROG:-$APPNAME}"
-      [ -z "$SHORTOPTS" ] || __list_options "5" "Short Options" "-$SHORTOPTS" ',' '-'
-      [ -z "$LONGOPTS" ] || __list_options "5" "Long Options" "--$LONGOPTS" ',' '--'
-      [ -z "$ARRAY" ] || __list_options "5" "Base Options" "$ARRAY" ',' ''
-      exit $?
+      [ -n "$1" ] || __printf_blue "Current options for ${PROG}"
+      [ -z "$SHORTOPTS" ] || __list_options "Short Options" "-$SHORTOPTS"
+      [ -z "$LONGOPTS" ] || __list_options "Long Options" "--$LONGOPTS"
+      [ -z "$ARRAY" ] || __list_options "Base Options" "$ARRAY"
+      exit 0
       ;;
-    --version)
+    -v|--version)
       shift 1
       __version
-      exit $?
+      exit 0
       ;;
-    --help)
+    -h|--help)
       shift 1
       __help
-      exit $?
+      exit 0
       ;;
     --config)
       shift 1
@@ -403,18 +475,19 @@ EOF
       ;;
     esac
   done
-  #set -- "$SETARGS"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # Actions based on env
   [ "$MYSCREEN_CREATE_ENABLED" = "true" ] && [ -z "$MYSCREEN_CREATE_TEMPLATE" ] && __help
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Check for required applications/Network check
-  cmd_exists --error bash screen || exit 1 # exit 1 if not found
-  #am_i_online --error || exit 1     # exit 1 if no internet
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Check for required applications
+  if ! __cmd_exists screen; then
+    __printf_red "Error: screen is not installed"
+    exit 1
+  fi
+
   # APP Variables overrides
   [ "$MYSCREEN_CREATE_ENABLED" = "true" ] && __create_template "$@"
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   # begin main app
   case $1 in
   create)
@@ -432,15 +505,11 @@ EOF
     ;;
   esac
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # lets exit with code
   return ${exitCode:-$?}
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# execute function
-myscreen_main "$@"
+# Execute
+main "$@"
+exit $?
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# End application
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# lets exit with code
-exit ${exitCode:-$?}
+# end
